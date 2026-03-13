@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+langgraph
+langchain
+langchain-openai
+langchain-google-genai
+playwright
+python-dotenv
+requests
+httpx
+pydantic
+alembic
+google-api-python-client
+google-auth-oauthlib
