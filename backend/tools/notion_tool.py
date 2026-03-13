@@ -6,6 +6,23 @@ NOTION_VERSION = "2022-06-28"
 NOTION_DATABASE_ID = config.NOTION_DATABASE_ID
 DEFAULT_TIMEOUT = 10.0
 
+
+def _normalize_notion_status(status: str) -> str:
+    """Map internal workflow status values to Notion select labels."""
+    if not isinstance(status, str):
+        return "Pending"
+
+    key = status.strip().lower().replace("_", " ")
+    mapping = {
+        "pending": "Pending",
+        "planning": "Planning",
+        "executing": "In Progress",
+        "in progress": "In Progress",
+        "completed": "Completed",
+        "failed": "Failed",
+    }
+    return mapping.get(key, status)
+
 def _get_headers():
     return {
         "Authorization": f"Bearer {NOTION_API_KEY}",
@@ -69,11 +86,13 @@ def update_notion_task_status(page_id: str, new_status: str):
     """
     url = f"https://api.notion.com/v1/pages/{page_id}"
     
+    normalized_status = _normalize_notion_status(new_status)
+
     payload = {
         "properties": {
             "AgentStatus": {
                 "select": {
-                    "name": new_status
+                    "name": normalized_status
                 }
             }
         }

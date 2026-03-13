@@ -94,6 +94,8 @@ Dashboard at `http://localhost:3000`.
 | `update_notion_status` | ✅ | Notion API |
 | `create_repo` | ✅ | GitHub API |
 | `create_issue` | ✅ | GitHub API |
+| `github_open_pr` | ✅ | GitHub API (branch + commit + PR) |
+| `github_pr_review_summary` | ✅ | GitHub API (PR diff summary + review comment) |
 | `draft_email` | ⏳ | Stub (Auth needed) |
 | `send_email` | ⏳ | Stub (Auth needed) |
 | `schedule_event` | ⏳ | Stub (Auth needed) |
@@ -144,3 +146,15 @@ The `frontend/` directory may contain its own `.git` folder depending on your in
 ## License
 
 MIT
+
+---
+
+## Images
+
+![Screenshot 1](images/Screenshot%202026-03-13%20at%206.58.45%E2%80%AFPM.png)
+![Screenshot 2](images/Screenshot%202026-03-13%20at%206.58.55%E2%80%AFPM.png)
+![Screenshot 3](images/Screenshot%202026-03-13%20at%206.59.03%E2%80%AFPM.png)
+![Screenshot 4](images/Screenshot%202026-03-13%20at%206.59.25%E2%80%AFPM.png)
+![Screenshot 5](images/Screenshot%202026-03-13%20at%206.59.57%E2%80%AFPM.png)
+![Screenshot 6](images/Screenshot%202026-03-13%20at%207.00.03%E2%80%AFPM.png)
+![Screenshot 7](images/Screenshot%202026-03-13%20at%207.00.06%E2%80%AFPM.png)
