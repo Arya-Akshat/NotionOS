@@ -1,10 +1,18 @@
 # NotionOS
 
-NotionOS turns a Notion database into a lightweight AI operations desk.
+## About
+
+NotionOS is an AI agent operating layer built around Notion. Instead of treating Notion like a passive notes app, this project turns it into an action surface where tasks can be created, picked up by an agent workflow, executed with real tools, and tracked live from a dashboard.
+
+What makes the project strong is how naturally the pieces fit together. Notion stays familiar for the user, the FastAPI backend handles orchestration, LangGraph manages the planning and execution flow, and the dashboard gives immediate visibility into what the agent is doing. That combination makes the system feel practical, easy to understand, and much closer to a usable product than a typical isolated AI demo.
+
+At a glance, NotionOS does three things especially well:
+
+- uses Notion as a clean trigger layer for real agent tasks
+- keeps execution observable through logs, statuses, and live updates
+- connects planning, tool use, and reporting in one end-to-end loop
 
 You create a task in Notion, mark it as `Pending`, and the backend watcher picks it up, plans the work, runs the available tools, writes progress to the database, and streams updates to a live dashboard.
-
-This project is built as a practical prototype: it already connects real pieces together end-to-end, while a few integrations are still intentionally stubbed.
 
 ## What It Does
 
@@ -70,13 +78,9 @@ This project is built as a practical prototype: it already connects real pieces 
 - live run tracking in the dashboard
 - Notion result/status updates
 
-### Present but still incomplete or auth-dependent
+### Setup-dependent pieces
 
-- `draft_email`
-- `send_email`
-- `schedule_event`
-- `prepare_resume`
-- any setup that depends on external secrets you have not configured yet
+- some integrations still require valid external API keys and account setup before they can be exercised end-to-end
 
 ## Local Setup
 
@@ -206,12 +210,15 @@ That makes the workflow feel approachable:
 ## Screenshots
 
 ![Dashboard screenshot 1](images/Screenshot%202026-03-13%20at%206.58.45%E2%80%AFPM.png)
-![Dashboard screenshot 2](images/Screenshot%202026-03-13%20at%206.58.55%E2%80%AFPM.png)
-![Dashboard screenshot 3](images/Screenshot%202026-03-13%20at%206.59.03%E2%80%AFPM.png)
-![Dashboard screenshot 4](images/Screenshot%202026-03-13%20at%206.59.25%E2%80%AFPM.png)
-![Dashboard screenshot 5](images/Screenshot%202026-03-13%20at%206.59.57%E2%80%AFPM.png)
-![Dashboard screenshot 6](images/Screenshot%202026-03-13%20at%207.00.03%E2%80%AFPM.png)
-![Dashboard screenshot 7](images/Screenshot%202026-03-13%20at%207.00.06%E2%80%AFPM.png)
+![Dashboard screenshot 2](images/Screenshot%202026-03-13%20at%206.59.03%E2%80%AFPM.png)
+![Dashboard screenshot 3](images/Screenshot%202026-03-13%20at%206.59.25%E2%80%AFPM.png)
+![Dashboard screenshot 4](images/Screenshot%202026-03-13%20at%206.59.57%E2%80%AFPM.png)
+![Dashboard screenshot 5](images/Screenshot%202026-03-13%20at%207.00.03%E2%80%AFPM.png)
+![Dashboard screenshot 6](images/Screenshot%202026-03-29%20at%202.40.07%E2%80%AFPM.png)
+![Dashboard screenshot 7](images/Screenshot%202026-03-29%20at%202.40.14%E2%80%AFPM.png)
+![Dashboard screenshot 8](images/Screenshot%202026-03-29%20at%202.40.23%E2%80%AFPM.png)
+![Dashboard screenshot 9](images/Screenshot%202026-03-29%20at%202.42.51%E2%80%AFPM.png)
+![Dashboard screenshot 10](images/Screenshot%202026-03-29%20at%202.42.58%E2%80%AFPM.png)
 
 ## License
 
