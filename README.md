@@ -1,64 +1,120 @@
-# NotionOS — AI Agent Operating System for Notion
+# NotionOS
 
-> Transform Notion into an autonomous command center. Create tasks in Notion and let AI agents plan, execute, and report back — automatically.
+NotionOS turns a Notion database into a lightweight AI operations desk.
 
----
+You create a task in Notion, mark it as `Pending`, and the backend watcher picks it up, plans the work, runs the available tools, writes progress to the database, and streams updates to a live dashboard.
 
-## Architecture
+This project is built as a practical prototype: it already connects real pieces together end-to-end, while a few integrations are still intentionally stubbed.
 
-```
-Notion Database
-    ↓   (poll every 10s)
-┌───────────────────────────────────────┐
-│  FastAPI Backend                      │
-│  ┌─────────────┐  ┌───────────────┐  │
-│  │ Notion      │→ │ LangGraph     │  │
-│  │ Watcher     │  │ Agent Engine  │  │
-│  └─────────────┘  └──────┬────────┘  │
-│                          │           │
-│  ┌───────────────────────┴────────┐  │
-│  │ Tool Layer                     │  │
-│  │ Notion · GitHub · Gmail ·      │  │
-│  │ Calendar · Playwright          │  │
-│  └────────────────────────────────┘  │
-│         ↓                            │
-│  PostgreSQL (logs, agent runs)       │
-│         ↓ WebSocket                  │
-└───────────────────────────────────────┘
-    ↓
-Next.js Dashboard (real-time)
-```
+## What It Does
+
+- Watches a Notion database for tasks that are ready to run
+- Converts each task into a structured execution plan with a LangGraph workflow
+- Executes supported tools like web search, form automation, and GitHub actions
+- Stores run history and tool logs in the database
+- Pushes live updates to a Next.js dashboard over WebSockets
+- Writes status updates and result summaries back into Notion
+
+## Demo
+
+- Demo video: [demo.mp4](./demo.mp4)
+- Screenshots are included near the bottom of this README
+
+## How The Flow Works
+
+1. A task is added in Notion and `AgentStatus` is set to `Pending`.
+2. The FastAPI watcher polls Notion every 10 seconds.
+3. The planner turns the task text into a goal plus a step-by-step execution plan.
+4. The executor runs each tool, records outputs, retries failures when possible, and keeps going when a non-critical step fails.
+5. Results are saved to the database, broadcast to the dashboard, and summarized back into the original Notion page.
 
 ## Tech Stack
 
-| Layer      | Technology              |
-|------------|-------------------------|
-| Backend    | Python · FastAPI        |
-| Agent      | LangGraph · LangChain  |
-| LLM        | Gemini 2.0 (Primary) · Groq (Fallback) |
-| Automation | Playwright              |
-| Database   | PostgreSQL · SQLAlchemy |
-| Frontend   | Next.js · TailwindCSS   |
-| Real-time  | WebSockets              |
+| Layer | Stack |
+| --- | --- |
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS |
+| Backend | FastAPI, SQLAlchemy, Uvicorn |
+| Agent workflow | LangGraph, LangChain |
+| LLM providers | Gemini (primary), Groq (configured as fallback) |
+| Browser automation | Playwright |
+| External integrations | Notion API, GitHub API, Tavily |
+| Realtime | WebSockets |
 
----
+## Project Structure
 
-## Quick Start
+```text
+.
+├── backend/
+│   ├── agent/          # intent parsing, planning, execution
+│   ├── models/         # SQLAlchemy models for runs and tool logs
+│   ├── tools/          # Notion, GitHub, browser, Gmail, calendar helpers
+│   ├── workers/        # background Notion watcher
+│   └── workflows/      # LangGraph task workflow
+├── frontend/
+│   └── src/            # dashboard UI
+├── images/             # screenshots used in the README
+└── demo.mp4            # demo video
+```
 
-### 1. Clone & Environment
+## Current Feature Status
+
+### Working in this repo
+
+- `web_search`
+- `search_jobs`
+- `fill_forms`
+- `update_notion_status`
+- `create_issue`
+- `github_open_pr`
+- `github_pr_review_summary`
+- live run tracking in the dashboard
+- Notion result/status updates
+
+### Present but still incomplete or auth-dependent
+
+- `draft_email`
+- `send_email`
+- `schedule_event`
+- `prepare_resume`
+- any setup that depends on external secrets you have not configured yet
+
+## Local Setup
+
+### 1. Add environment variables
+
+Copy the root example file into the backend:
 
 ```bash
 cp .env.example backend/.env
-# Fill in your API keys in backend/.env
 ```
 
-### 2. Set up PostgreSQL
+Then fill in the values inside `backend/.env`.
+
+Required keys:
+
+- `GOOGLE_API_KEY`
+- `GROQ_API_KEY`
+- `TAVILY_API_KEY`
+- `NOTION_API_KEY`
+- `NOTION_DATABASE_ID`
+- `GITHUB_TOKEN`
+- `DATABASE_URL`
+
+Default database value in the repo:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/notionos"
+```
+
+### 2. Start PostgreSQL
+
+Create a local database:
 
 ```bash
 createdb notionos
 ```
 
-### 3. Start the Backend
+### 3. Install backend dependencies
 
 ```bash
 cd backend
@@ -66,13 +122,25 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 playwright install
+```
 
-# Run the server (from the project root, NOT backend/)
-cd ..
+### 4. Run the backend
+
+From the project root:
+
+```bash
 uvicorn backend.main:app --reload
 ```
 
-### 4. Start the Frontend
+Backend endpoints:
+
+- API: `http://localhost:8000`
+- Health check: `http://localhost:8000/health`
+- WebSocket: `ws://localhost:8000/ws/logs`
+
+### 5. Run the frontend
+
+In a second terminal:
 
 ```bash
 cd frontend
@@ -80,81 +148,71 @@ npm install
 npm run dev
 ```
 
-Dashboard at `http://localhost:3000`.
+Frontend:
 
----
+- Dashboard: `http://localhost:3000`
 
-## Tool Implementation Status
+## Expected Notion Setup
 
-| Tool | Status | Implementation |
-|------|--------|----------------|
-| `search_jobs` | ✅ | Playwright Browser |
-| `web_search` | ✅ | Tavily API (preferred) · Playwright fallback |
-| `fill_forms` | ✅ | Playwright Browser |
-| `update_notion_status` | ✅ | Notion API |
-| `create_repo` | ✅ | GitHub API |
-| `create_issue` | ✅ | GitHub API |
-| `github_open_pr` | ✅ | GitHub API (branch + commit + PR) |
-| `github_pr_review_summary` | ✅ | GitHub API (PR diff summary + review comment) |
-| `draft_email` | ⏳ | Stub (Auth needed) |
-| `send_email` | ⏳ | Stub (Auth needed) |
-| `schedule_event` | ⏳ | Stub (Auth needed) |
-| `prepare_resume` | ⏳ | Stub |
+The watcher is expecting a Notion database with fields similar to these:
 
----
+- `Name` or `Title`
+- `Goal`
+- `AgentStatus`
 
-## Status Vocabulary
+The workflow currently looks for rows where:
 
-### Backend (AgentRun Status)
-- `PENDING`: Task detected, waiting for planner.
-- `PLANNING`: LLM is generating the execution steps.
-- `EXECUTING`: Tools are currently running.
-- `COMPLETED`: All steps finished (even if some tools failed gracefully).
-- `FAILED`: Planner failed or a critical system error occurred.
+```text
+AgentStatus = Pending
+```
 
-### Notion (AgentStatus Property)
-- `Pending`: Set this to trigger the agent.
-- `In Progress`: Agent is currently working.
-- `COMPLETED`: Workflow finished successfully.
-- `FAILED`: Workflow stopped due to an error.
+The code then updates that status throughout execution and appends a result summary back onto the page.
 
----
+## Status Meanings
 
-## Environment Variables
+### Internal workflow status
 
-### Backend (`backend/.env`)
-- `GOOGLE_API_KEY`: Gemini API key from [AI Studio](https://aistudio.google.com/).
-- `GROQ_API_KEY`: Groq API key from [Groq Console](https://console.groq.com/).
-- `TAVILY_API_KEY`: Tavily API key for reliable web search results.
-- `NOTION_API_KEY`: Internal integration secret.
-- `NOTION_DATABASE_ID`: The 32-char ID of your task database.
-- `GITHUB_TOKEN`: Personal access token with `repo` scope.
-- `DATABASE_URL`: `postgresql://user:pass@localhost:5432/notionos`
+- `PENDING`: run was created
+- `PLANNING`: task is being converted into an execution plan
+- `EXECUTING`: tool steps are currently running
+- `COMPLETED`: execution finished
+- `FAILED`: planning failed or a fatal error stopped the workflow
 
-### Frontend (`frontend/.env.local` - Optional)
-- `NEXT_PUBLIC_API_URL`: Defaults to `http://localhost:8000`
-- `NEXT_PUBLIC_WS_URL`: Defaults to `ws://localhost:8000`
+### Notion-facing status labels
 
----
+- `Pending`
+- `Planning`
+- `In Progress`
+- `Completed`
+- `Failed`
 
-## Repo Hygiene Note
+## Notes And Tradeoffs
 
-The `frontend/` directory may contain its own `.git` folder depending on your initialization method. If you intend for this to be a single repository, you can safely delete `frontend/.git` and manage everything from the root.
+- The watcher polls every 10 seconds, so this is near-real-time rather than event-driven.
+- The repo includes `backend/notionos.db`, but the app configuration defaults to PostgreSQL. The active database is whichever `DATABASE_URL` you set in `backend/.env`.
+- Some integrations are clearly scaffolded for expansion, which makes this a strong prototype rather than a fully productized system.
+- The dashboard is focused on visibility and debugging: runs, logs, statuses, and delete actions are all already wired up.
 
----
+## Why This Project Is Interesting
+
+What makes this project stand out is not just that it uses an LLM. The stronger idea is that Notion becomes the control surface for an agent system people already know how to use.
+
+That makes the workflow feel approachable:
+
+- product or ops people can trigger work from a familiar interface
+- the backend keeps a structured log of what the agent actually did
+- the dashboard gives the team a live operational view instead of a black box
+
+## Screenshots
+
+![Dashboard screenshot 1](images/Screenshot%202026-03-13%20at%206.58.45%E2%80%AFPM.png)
+![Dashboard screenshot 2](images/Screenshot%202026-03-13%20at%206.58.55%E2%80%AFPM.png)
+![Dashboard screenshot 3](images/Screenshot%202026-03-13%20at%206.59.03%E2%80%AFPM.png)
+![Dashboard screenshot 4](images/Screenshot%202026-03-13%20at%206.59.25%E2%80%AFPM.png)
+![Dashboard screenshot 5](images/Screenshot%202026-03-13%20at%206.59.57%E2%80%AFPM.png)
+![Dashboard screenshot 6](images/Screenshot%202026-03-13%20at%207.00.03%E2%80%AFPM.png)
+![Dashboard screenshot 7](images/Screenshot%202026-03-13%20at%207.00.06%E2%80%AFPM.png)
 
 ## License
 
 MIT
-
----
-
-## Images
-
-![Screenshot 1](images/Screenshot%202026-03-13%20at%206.58.45%E2%80%AFPM.png)
-![Screenshot 2](images/Screenshot%202026-03-13%20at%206.58.55%E2%80%AFPM.png)
-![Screenshot 3](images/Screenshot%202026-03-13%20at%206.59.03%E2%80%AFPM.png)
-![Screenshot 4](images/Screenshot%202026-03-13%20at%206.59.25%E2%80%AFPM.png)
-![Screenshot 5](images/Screenshot%202026-03-13%20at%206.59.57%E2%80%AFPM.png)
-![Screenshot 6](images/Screenshot%202026-03-13%20at%207.00.03%E2%80%AFPM.png)
-![Screenshot 7](images/Screenshot%202026-03-13%20at%207.00.06%E2%80%AFPM.png)
