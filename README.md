@@ -14,6 +14,40 @@ At a glance, NotionOS does three things especially well:
 
 You create a task in Notion, mark it as `Pending`, and the backend watcher picks it up, plans the work, runs the available tools, writes progress to the database, and streams updates to a live dashboard.
 
+## Workflow Diagram
+
+![Workflow Diagram](images/workflow.png)
+
+```mermaid
+flowchart LR
+    A[User creates task in Notion] --> B[AgentStatus set to Pending]
+    B --> C[Notion watcher polls database]
+    C --> D[FastAPI backend picks up task]
+    D --> E[Task marked In Progress]
+    E --> F[LangGraph planner builds execution plan]
+    F --> G[Executor runs tool steps]
+
+    G --> H[Browser tools]
+    G --> I[GitHub tools]
+    G --> J[Notion tools]
+
+    H --> K[Web search, job search, form automation]
+    I --> L[Create issue, open PR, review PR]
+    J --> M[Update status, append logs, append result]
+
+    K --> N[Outputs and errors collected]
+    L --> N
+    M --> N
+
+    N --> O[Runs and tool logs stored in database]
+    O --> P[WebSocket events sent to frontend]
+    P --> Q[Dashboard updates in real time]
+
+    O --> R[Final summary generated]
+    R --> S[Summary written back to Notion]
+    S --> T[Task marked Completed or Failed]
+```
+
 ## What It Does
 
 - Watches a Notion database for tasks that are ready to run
@@ -27,14 +61,6 @@ You create a task in Notion, mark it as `Pending`, and the backend watcher picks
 
 - Demo video: [demo.mp4](./demo.mp4)
 - Screenshots are included near the bottom of this README
-
-## How The Flow Works
-
-1. A task is added in Notion and `AgentStatus` is set to `Pending`.
-2. The FastAPI watcher polls Notion every 10 seconds.
-3. The planner turns the task text into a goal plus a step-by-step execution plan.
-4. The executor runs each tool, records outputs, retries failures when possible, and keeps going when a non-critical step fails.
-5. Results are saved to the database, broadcast to the dashboard, and summarized back into the original Notion page.
 
 ## Tech Stack
 
