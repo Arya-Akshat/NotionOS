@@ -209,16 +209,24 @@ That makes the workflow feel approachable:
 
 ## Screenshots
 
+### Dashboard
+
 ![Dashboard screenshot 1](images/Screenshot%202026-03-13%20at%206.58.45%E2%80%AFPM.png)
 ![Dashboard screenshot 2](images/Screenshot%202026-03-13%20at%206.59.03%E2%80%AFPM.png)
-![Dashboard screenshot 3](images/Screenshot%202026-03-13%20at%206.59.25%E2%80%AFPM.png)
-![Dashboard screenshot 4](images/Screenshot%202026-03-13%20at%206.59.57%E2%80%AFPM.png)
-![Dashboard screenshot 5](images/Screenshot%202026-03-13%20at%207.00.03%E2%80%AFPM.png)
-![Dashboard screenshot 6](images/Screenshot%202026-03-29%20at%202.40.07%E2%80%AFPM.png)
-![Dashboard screenshot 7](images/Screenshot%202026-03-29%20at%202.40.14%E2%80%AFPM.png)
-![Dashboard screenshot 8](images/Screenshot%202026-03-29%20at%202.40.23%E2%80%AFPM.png)
-![Dashboard screenshot 9](images/Screenshot%202026-03-29%20at%202.42.51%E2%80%AFPM.png)
-![Dashboard screenshot 10](images/Screenshot%202026-03-29%20at%202.42.58%E2%80%AFPM.png)
+
+### Notion Database
+
+![Notion database screenshot 1](images/Screenshot%202026-03-13%20at%206.59.25%E2%80%AFPM.png)
+![Notion database screenshot 2](images/Screenshot%202026-03-13%20at%206.59.57%E2%80%AFPM.png)
+![Notion database screenshot 3](images/Screenshot%202026-03-13%20at%207.00.03%E2%80%AFPM.png)
+![Notion database screenshot 4](images/Screenshot%202026-03-29%20at%202.40.07%E2%80%AFPM.png)
+![Notion database screenshot 5](images/Screenshot%202026-03-29%20at%202.40.14%E2%80%AFPM.png)
+![Notion database screenshot 6](images/Screenshot%202026-03-29%20at%202.40.23%E2%80%AFPM.png)
+
+### Dashboard
+
+![Dashboard screenshot 3](images/Screenshot%202026-03-29%20at%202.42.51%E2%80%AFPM.png)
+![Dashboard screenshot 4](images/Screenshot%202026-03-29%20at%202.42.58%E2%80%AFPM.png)
 
 ## License
 
