@@ -1,7 +1,7 @@
 import requests
 import datetime
 import base64
-from backend.config import config
+from config import config
 
 GITHUB_TOKEN = config.GITHUB_TOKEN
 GITHUB_API_URL = "https://api.github.com"

@@ -40,6 +40,7 @@ const STATUS_COLORS: Record<string, string> = {
   EXECUTING: "bg-blue-500/20 text-blue-400 border-blue-500/50",
   COMPLETED: "bg-emerald-500/20 text-emerald-400 border-emerald-500/50",
   FAILED:    "bg-red-500/20 text-red-400 border-red-500/50",
+  WAITING_FOR_APPROVAL: "bg-amber-500/20 text-amber-400 border-amber-500/50",
 };
 
 /* ------------------------------------------------------------------ */
@@ -52,6 +53,7 @@ export default function Dashboard() {
   const [logs, setLogs] = useState<ToolLog[]>([]);
   const [wsStatus, setWsStatus] = useState<"connected" | "disconnected">("disconnected");
   const [deletingRunId, setDeletingRunId] = useState<number | null>(null);
+  const [submittingApproval, setSubmittingApproval] = useState(false);
   
   // Refs to handle stale closures in WebSocket callbacks
   // Refs to handle stale closures and lifecycle
@@ -113,6 +115,35 @@ export default function Dashboard() {
       setDeletingRunId(null);
     }
   }, []);
+
+  /* ---- Approve/Reject ------------------------------------------- */
+  const approveRun = useCallback(async (runId: number) => {
+    try {
+      setSubmittingApproval(true);
+      const res = await fetch(`${API_URL}/api/runs/${runId}/approve`, { method: "POST" });
+      if (res.ok) {
+        fetchRuns();
+      }
+    } catch (err) {
+      console.error("Failed to approve run:", err);
+    } finally {
+      setSubmittingApproval(false);
+    }
+  }, [fetchRuns]);
+
+  const rejectRun = useCallback(async (runId: number) => {
+    try {
+      setSubmittingApproval(true);
+      const res = await fetch(`${API_URL}/api/runs/${runId}/reject`, { method: "POST" });
+      if (res.ok) {
+        fetchRuns();
+      }
+    } catch (err) {
+      console.error("Failed to reject run:", err);
+    } finally {
+      setSubmittingApproval(false);
+    }
+  }, [fetchRuns]);
 
   /* ---- WebSocket setup ------------------------------------------- */
   const connectWebSocket = useCallback(() => {
@@ -178,21 +209,22 @@ export default function Dashboard() {
   useEffect(() => {
     isMounted.current = true;
     connectWebSocket();
-
-    // Fallback polling every 30s instead of 5s to reduce noise,
-    // since we have real-time updates.
-    const pollInterval = setInterval(fetchRuns, 30000);
-
+    fetchRuns();
+    const interval = setInterval(fetchRuns, 5000);
     return () => {
       isMounted.current = false;
-      clearInterval(pollInterval);
+      clearInterval(interval);
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (wsRef.current) wsRef.current.close();
     };
   }, [connectWebSocket, fetchRuns]);
 
   useEffect(() => {
-    if (selectedRun) fetchLogs(selectedRun);
+    if (selectedRun) {
+      fetchLogs(selectedRun);
+      const interval = setInterval(() => fetchLogs(selectedRun), 3000);
+      return () => clearInterval(interval);
+    }
   }, [selectedRun, fetchLogs]);
 
   /* ---- Render ---------------------------------------------------- */
@@ -313,6 +345,50 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              {/* Approval Panel */}
+              {runs.find(r => r.id === selectedRun)?.status === "WAITING_FOR_APPROVAL" && (
+                <div className="p-6 rounded-xl bg-amber-500/10 border border-amber-500/40 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="flex h-3 w-3 rounded-full bg-amber-500 animate-ping" />
+                    <h3 className="text-amber-400 font-bold uppercase tracking-wider text-sm">
+                      Awaiting your approval to proceed
+                    </h3>
+                  </div>
+                  <p className="text-gray-300 text-sm mb-4">
+                    The agent has generated an execution plan and is waiting for your confirmation.
+                  </p>
+                  
+                  <div className="bg-black/30 rounded-lg p-4 mb-6 border border-amber-500/20">
+                    <span className="text-[10px] text-amber-500/60 uppercase font-bold tracking-widest block mb-2">Proposed Actions</span>
+                    <ul className="space-y-2">
+                      {runs.find(r => r.id === selectedRun)?.execution_plan?.map((step: any, idx: number) => (
+                        <li key={idx} className="flex items-center gap-2 text-xs text-gray-400">
+                          <span className="text-amber-500/40 font-mono w-4">{idx + 1}.</span>
+                          <span className="text-blue-300 font-mono">{typeof step === 'string' ? step : step.tool}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => approveRun(selectedRun)}
+                      disabled={submittingApproval}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:hover:bg-emerald-600 text-white font-bold py-2 rounded-lg transition-colors shadow-lg shadow-emerald-900/20"
+                    >
+                      {submittingApproval ? "Processing..." : "Approve Plan"}
+                    </button>
+                    <button
+                      onClick={() => rejectRun(selectedRun)}
+                      disabled={submittingApproval}
+                      className="flex-1 bg-red-900/40 hover:bg-red-800/40 disabled:opacity-50 border border-red-500/30 text-red-300 font-bold py-2 rounded-lg transition-colors"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {logs.length === 0 && (
                 <div className="text-gray-600 text-sm italic py-10 text-center">
                   No steps recorded yet for this run.

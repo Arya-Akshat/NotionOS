@@ -2,7 +2,7 @@ from urllib.parse import quote_plus
 
 import requests
 from playwright.sync_api import sync_playwright
-from backend.config import config
+from config import config
 
 
 def _normalize_search_query(query: str) -> str:

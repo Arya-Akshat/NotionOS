@@ -7,12 +7,19 @@ Returns steps as [{tool, args}] for the executor.
 
 import json
 import re
+import logging
+from datetime import datetime
 from pydantic import BaseModel, Field
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
-from backend.config import config
+from langchain_google_genai import ChatGoogleGenerativeAI
+import groq
+from config import config
+from notion_mcp.context import WorkspaceContextBuilder
+import asyncio
 
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Supported tools — ONLY include tools that are fully implemented and executable.
@@ -38,32 +45,32 @@ class IntentResponse(BaseModel):
 
 def _get_llm_candidates():
     """
-    Returns available LLMs in priority order.
-    We try each candidate and fall back on provider/rate-limit errors.
+    Returns available fallback LLMs.
+    Note: Groq native is handled directly in parse_intent as primary.
     """
     candidates = []
 
-    if config.GOOGLE_API_KEY:
+    if config.GEMINI_API_KEY:
         candidates.append((
             "Gemini",
             ChatGoogleGenerativeAI(
-                model="gemini-2.0-flash",
-                google_api_key=config.GOOGLE_API_KEY,
+                model="gemini-2.0-flash", 
+                google_api_key=config.GEMINI_API_KEY,
                 temperature=0,
             ),
         ))
 
     if config.GROQ_API_KEY:
+        # Keep ChatGroq as an additional fallback if needed
         candidates.append((
-            "Groq",
-            ChatOpenAI(
-                model="llama-3.3-70b-versatile",
+            "Groq_LangChain",
+            ChatGroq(
+                model="llama-3.3-70b-versatile", 
                 api_key=config.GROQ_API_KEY,
-                base_url="https://api.groq.com/openai/v1",
                 temperature=0,
             ),
         ))
-
+    
     return candidates
 
 
@@ -297,11 +304,47 @@ def _normalize_actions(raw_actions: list) -> list[dict]:
     return normalized
 
 
-def parse_intent(task_text: str) -> dict:
+async def parse_intent(task_title: str, task_text: str) -> dict:
     """
-    Parses a natural language Notion task into a structured goal and action plan.
-    Returns { success, data: { goal, actions: [{tool, args}] }, error }.
+    Parses a natural language intent into a structured plan using LLMs.
     """
+    MAX_CONTEXT_TOKENS = 2000
+
+    # 1. Fetch workspace context
+    workspace_context = await WorkspaceContextBuilder.build(task_title, task_text)
+
+    
+    from graph.workspace_graph import get_workspace_graph
+    graph = get_workspace_graph()
+    workspace_context["graph_nodes"] = graph.get("nodes", [])[:5]
+
+    # 2. Build context string and enforce token limits (approximation)
+    # Simple approx: 1 token ~= 4 chars
+    context_str = (
+        f"--- WORKSPACE CONTEXT ---\n"
+        f"Related Pages: {workspace_context.get('related_pages', [])}\n"
+        f"Prior Runs: {workspace_context.get('prior_runs', [])}\n"
+        f"Linked Tasks: {workspace_context.get('linked_tasks', [])}\n"
+        f"Project Notes: {workspace_context.get('project_notes', [])}\n"
+        f"-------------------------\n"
+    )
+
+    if len(context_str) > (MAX_CONTEXT_TOKENS * 4):
+        trimmed_len = (MAX_CONTEXT_TOKENS * 4)
+        diff_tokens = (len(context_str) - trimmed_len) // 4
+        context_str = context_str[:trimmed_len] + "\n[TRUNCATED]\n-------------------------\n"
+        logger.warning({
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "phase": "phase-3",
+            "component": "intent_parser",
+            "level": "WARNING",
+            "event": "context_truncated",
+            "detail": f"Context exceeded limit. Trimmed ~{diff_tokens} tokens"
+        })
+
+    # Integrate context into task_text for the prompt
+    task_text_with_context = f"{context_str}\nTask:\n{task_text}"
+
     try:
         print(f"[Planner] Analyzing task: {task_text}")
 
@@ -309,20 +352,54 @@ def parse_intent(task_text: str) -> dict:
             print("[Planner] Using heuristic-first planner for deterministic task intent")
             return _heuristic_plan(task_text)
 
+        # 3. Try PRIMARY: Groq Native SDK
+        if config.GROQ_API_KEY:
+            try:
+                print("[Planner] Trying Groq Native (Primary)")
+                client = groq.Groq(api_key=config.GROQ_API_KEY)
+                prompt_text = PROMPT.format(task=task_text_with_context)
+                
+                response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant that outputs only valid JSON."},
+                        {"role": "user", "content": prompt_text}
+                    ],
+                    temperature=0,
+                    response_format={"type": "json_object"}
+                )
+                
+                content = response.choices[0].message.content
+                parsed = json.loads(content)
+                actions = _normalize_actions(parsed.get("actions", []))
+                return {
+                    "success": True,
+                    "provider": "Groq_Native",
+                    "data": {
+                        "goal": parsed.get("goal", "Unknown goal"),
+                        "actions": actions,
+                    },
+                    "error": None,
+                }
+            except Exception as e:
+                print(f"[Planner] Groq Native failed: {e}")
+
+        # 4. Try FALLBACKS: Gemini, LangChain Groq, etc.
         candidates = _get_llm_candidates()
 
         for provider_name, llm in candidates:
-            print(f"[Planner] Trying {provider_name} LLM")
+            print(f"[Planner] Trying {provider_name} LLM (Fallback)")
 
             # Try structured output first
             try:
                 structured_llm = llm.with_structured_output(IntentResponse)
                 chain = PROMPT | structured_llm
-                response: IntentResponse = chain.invoke({"task": task_text})
+                response: IntentResponse = chain.invoke({"task": task_text_with_context})
                 print(f"[Planner] {provider_name} structured response: {response}")
                 actions = _normalize_actions(response.actions)
                 return {
                     "success": True,
+                    "provider": provider_name,
                     "data": {"goal": response.goal, "actions": actions},
                     "error": None,
                 }
@@ -336,13 +413,13 @@ def parse_intent(task_text: str) -> dict:
             # Fallback: raw text -> parse JSON manually
             try:
                 chain = PROMPT | llm
-                response = chain.invoke({"task": task_text})
-                print(f"[Planner] {provider_name} raw text response: {response.content}")
+                response = chain.invoke({"task": task_text_with_context})
                 content = response.content.strip().strip("```json").strip("```").strip()
                 parsed = json.loads(content)
                 actions = _normalize_actions(parsed.get("actions", []))
                 return {
                     "success": True,
+                    "provider": provider_name,
                     "data": {
                         "goal": parsed.get("goal", "Unknown goal"),
                         "actions": actions,
@@ -353,7 +430,9 @@ def parse_intent(task_text: str) -> dict:
                 print(f"[Planner] {provider_name} raw parse failed: {e}")
 
         print("[Planner] All LLM providers failed, using heuristic fallback planner")
-        return _heuristic_plan(task_text)
+        res = _heuristic_plan(task_text)
+        res["provider"] = "Heuristic"
+        return res
 
     except Exception as e:
         print(f"[Planner] Critical error: {e}")

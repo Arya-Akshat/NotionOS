@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from backend.database import Base
+from database import Base
 
 class AgentRun(Base):
     __tablename__ = "agent_runs"
@@ -11,6 +11,9 @@ class AgentRun(Base):
     status = Column(String, default="PENDING")  # PENDING, PLANNING, EXECUTING, COMPLETED, FAILED
     goal = Column(String, nullable=True)
     execution_plan = Column(JSON, nullable=True)
+    current_step = Column(Integer, default=0)
+    tool_outputs = Column(JSON, default=dict)
+    errors = Column(JSON, default=list)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

@@ -10,14 +10,14 @@ from unittest.mock import MagicMock, patch
 # Ensure backend is in path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.agent.planner import plan_workflow
-from backend.agent.executor import execute_tools, VALID_NOTION_STATUSES
-from backend.agent.intent_parser import parse_intent
+from agent.planner import plan_workflow
+from agent.executor import execute_tools, VALID_NOTION_STATUSES
+from agent.intent_parser import parse_intent
 
 def test_planner_failure():
     print("Testing planner failure path...")
     state = {
-        "original_text": "invalid task",
+        "task_text": "invalid task",
         "status": "PENDING",
         "errors": []
     }
@@ -55,7 +55,7 @@ def test_notion_status_vocab():
 
 def test_ws_dispatch_trigger():
     print("Testing WebSocket dispatch trigger...")
-    from backend.workflows.task_agent import log_tool_call
+    from workflows.task_agent import log_tool_call
     
     # Mock database session and main dispatcher
     mock_db = MagicMock()

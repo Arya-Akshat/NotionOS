@@ -11,9 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Set
 
-from backend.database import engine, Base, get_db
-from backend.models.logs import AgentRun, ToolCallLog
-from backend.workers.notion_watcher import watch_notion
+from database import engine, Base, get_db
+from models.logs import AgentRun, ToolCallLog
+from workers.notion_watcher import watch_notion
+from notion_mcp import mcp_client
 
 
 # ---------------------------------------------------------------------------
@@ -32,10 +33,23 @@ async def lifespan(app: FastAPI):
     
     # Create tables on startup
     Base.metadata.create_all(bind=engine)
+    
+    # Start MCP Server Subprocess
+    print("[Lifespan] Starting MCP client...")
+    try:
+        await mcp_client.connect()
+    except Exception as e:
+        print(f"[Lifespan] MCP client startup failed: {e}")
+
     # Launch background watcher
     task = asyncio.create_task(watch_notion(poll_interval=10))
     yield
     task.cancel()
+    
+    # Graceful shutdown MCP Client
+    print("[Lifespan] Shutting down MCP client...")
+    await mcp_client.disconnect()
+
 
 
 app = FastAPI(
@@ -47,7 +61,7 @@ app = FastAPI(
 # CORS for the Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], # TODO: Use env for production
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8000", "http://127.0.0.1:8000", "ws://localhost:3000"], # TODO: Use env for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -194,3 +208,25 @@ def dispatch_broadcast(message: dict):
             future.add_done_callback(_on_done)
     except Exception as e:
         print(f"[WS] Critical dispatch error: {e}")
+
+from pydantic import BaseModel
+class EmptyPayload(BaseModel):
+    pass
+
+from workflows.task_agent import approve_workflow, reject_workflow
+
+@app.post("/api/runs/{run_id}/approve")
+def approve_run_endpoint(run_id: int):
+    approve_workflow(run_id)
+    return {"success": True, "status": "EXECUTING"}
+
+@app.post("/api/runs/{run_id}/reject")
+async def reject_run_endpoint(run_id: int):
+    await reject_workflow(run_id)
+    return {"success": True, "status": "FAILED"}
+
+from graph.workspace_graph import get_workspace_graph
+
+@app.get("/workspace-graph")
+def workspace_graph_endpoint():
+    return get_workspace_graph()

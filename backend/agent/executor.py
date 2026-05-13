@@ -6,9 +6,9 @@ Includes retry logic and structured error handling.
 
 import time
 from typing import Any
-from backend.agent.planner import AgentState
-from backend.tools import notion_tool, github_tool, browser_tool
-from backend.agent.intent_parser import IMPLEMENTED_TOOLS
+from agent.planner import AgentState
+from tools import notion_tool, github_tool, browser_tool
+from agent.intent_parser import IMPLEMENTED_TOOLS
 
 # ---------------------------------------------------------------------------
 # Notion-safe status values (never emit "Done" or other invalid values)

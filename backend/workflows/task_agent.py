@@ -10,11 +10,11 @@ import re
 import time
 from urllib.parse import urlparse
 from langgraph.graph import StateGraph, END
-from backend.agent.planner import AgentState, plan_workflow
-from backend.agent.executor import execute_tools, _normalize_step
-from backend.database import SessionLocal
-from backend.models.logs import AgentRun, ToolCallLog
-from backend.tools.notion_tool import update_notion_task_status, append_log_to_page, append_result_to_page
+from agent.planner import AgentState, plan_workflow
+from agent.executor import execute_tools, _normalize_step
+from database import SessionLocal
+from models.logs import AgentRun, ToolCallLog
+from tools.notion_tool import update_notion_task_status, append_log_to_page, append_result_to_page
 
 # ---------------------------------------------------------------------------
 # WebSocket broadcast bridge — imported lazily at call-time to avoid
@@ -24,7 +24,7 @@ from backend.tools.notion_tool import update_notion_task_status, append_log_to_p
 def _broadcast_event(event_type: str, payload: dict):
     """Fire-and-forget broadcast to connected dashboard clients via thread-safe dispatcher."""
     try:
-        from backend.main import dispatch_broadcast
+        from main import dispatch_broadcast
         dispatch_broadcast({"type": event_type, **payload})
     except Exception as e:
         print(f"[WS] Broadcast trigger failed ({event_type}): {e}")
@@ -34,27 +34,42 @@ def _broadcast_event(event_type: str, payload: dict):
 # Database logging helpers
 # ---------------------------------------------------------------------------
 
-def initialize_agent_run(state: AgentState):
-    """Creates a PENDING agent run record in DB and broadcasts creation."""
+async def initialize_agent_run(state: AgentState):
+    """Binds to an existing AgentRun or creates a new one (fail-safe)."""
+    wf_id = state.get("workflow_id")
     db = SessionLocal()
     try:
-        run = AgentRun(
-            notion_task_id=state.get("task_id", "unknown_id"),
-            status="PENDING",
-        )
-        db.add(run)
-        db.commit()
-        db.refresh(run)
-        state["workflow_id"] = run.id
+        if wf_id:
+            # Look up the row created by the watcher
+            run = db.query(AgentRun).filter(AgentRun.id == wf_id).first()
+            if run:
+                # Update status to PENDING if it was PLANNING
+                run.status = "PENDING"
+                db.commit()
+                db.refresh(run)
+                state["status"] = "PENDING"
+        else:
+            # Fail-safe: create if watcher somehow missed it
+            run = AgentRun(
+                notion_task_id=state.get("task_id", "unknown_id"),
+                status="PENDING",
+            )
+            db.add(run)
+            db.commit()
+            db.refresh(run)
+            state["workflow_id"] = run.id
+
         _broadcast_event("run_created", {"run_id": run.id, "status": "PENDING"})
     except Exception as e:
-        print(f"[DB] Failed to initialize agent run: {e}")
+        print(f"[DB] Failed to initialize/bind agent run: {e}")
     finally:
         db.close()
+    
+    state = await sync_agent_run(state)
     return state
 
 
-def sync_agent_run(state: AgentState):
+async def sync_agent_run(state: AgentState):
     """Persists current agent state to DB and broadcasts status update."""
     wf_id = state.get("workflow_id")
     if not wf_id:
@@ -67,6 +82,14 @@ def sync_agent_run(state: AgentState):
             run.status = state.get("status", "UNKNOWN")
             run.goal = state.get("goal", "")
             run.execution_plan = state.get("execution_plan", [])
+            run.current_step = state.get("current_step", 0)
+            run.tool_outputs = state.get("tool_outputs", {})
+            run.errors = state.get("errors", [])
+        from tools.notion_tool import write_proposed_actions
+        if state.get("status") == "WAITING_FOR_APPROVAL":
+            await write_proposed_actions(state.get("task_id"), state.get("execution_plan", []))
+            from tools.notion_tool import write_initial_headers
+            await write_initial_headers(state.get("task_id"))
             db.commit()
             _broadcast_event("run_status_updated", {
                 "run_id": wf_id,
@@ -112,11 +135,23 @@ def log_tool_call(agent_run_id: int, tool_name: str, tool_input: dict, result: d
 # Graph nodes
 # ---------------------------------------------------------------------------
 
-def planner_node(state: AgentState):
+async def planner_node(state: AgentState):
     """Runs intent parsing + planning, then syncs status."""
-    state = plan_workflow(state)
-    state = sync_agent_run(state)
+    # SKIP if already approved/executing to prevent re-planning
+    if state.get("status") == "EXECUTING":
+        return state
+        
+    state = await plan_workflow(state)
+    state = await sync_agent_run(state)
     return state
+
+
+def entry_router(state: AgentState):
+    """Entry router: EXECUTING → execute loop, otherwise → start from initialization."""
+    status = state.get("status", "")
+    if status == "EXECUTING":
+        return "execute_and_log"
+    return "initialize_agent_run"
 
 
 def after_planner(state: AgentState):
@@ -125,13 +160,15 @@ def after_planner(state: AgentState):
     status = state.get("status", "")
     if status == "FAILED":
         return "finalize"
+    if status == "WAITING_FOR_APPROVAL":
+        return "end"
     if status == "EXECUTING":
         return "execute_and_log"
     # Unexpected status — fail-safe finalize
     return "finalize"
 
 
-def execute_and_log(state: AgentState):
+async def execute_and_log(state: AgentState):
     """Executes the current tool step and logs the result to DB."""
     # Guard — never execute if already FAILED
     if state.get("status") == "FAILED":
@@ -153,7 +190,7 @@ def execute_and_log(state: AgentState):
         result = outputs.get(tool_name) or outputs.get(f"{tool_name}_{current_step}", {})
         log_tool_call(state["workflow_id"], tool_name, tool_args, result)
 
-    state = sync_agent_run(state)
+    state = await sync_agent_run(state)
     return state
 
 
@@ -254,7 +291,7 @@ def _collect_result_lines(status: str, total: int, succeeded: int, failed: int, 
     return lines
 
 
-def finalize_node(state: AgentState):
+async def finalize_node(state: AgentState):
     """Final node: updates Notion page with status and concise summary.
     Handles both COMPLETED and FAILED runs."""
     page_id = state.get("task_id", "")
@@ -278,11 +315,11 @@ def finalize_node(state: AgentState):
     summary = " | ".join(summary_lines)
 
     if page_id:
-        update_notion_task_status(page_id, status)
-        append_log_to_page(page_id, summary)
-        append_result_to_page(page_id, _collect_result_lines(status, total, succeeded, failed, errors, outputs))
+        await update_notion_task_status(page_id, status)
+        await append_log_to_page(page_id, summary)
+        await append_result_to_page(page_id, _collect_result_lines(status, total, succeeded, failed, errors, outputs))
 
-    state = sync_agent_run(state)
+    state = await sync_agent_run(state)
     return state
 
 
@@ -297,7 +334,7 @@ workflow.add_node("planner_node", planner_node)
 workflow.add_node("execute_and_log", execute_and_log)
 workflow.add_node("finalize", finalize_node)
 
-workflow.set_entry_point("initialize_agent_run")
+workflow.set_conditional_entry_point(entry_router)
 workflow.add_edge("initialize_agent_run", "planner_node")
 
 # After planner: FAILED → finalize, EXECUTING → execute loop
@@ -310,3 +347,29 @@ workflow.add_edge("finalize", END)
 
 # Compiled graph
 agent_app = workflow.compile()
+
+def approve_workflow(run_id: int):
+    db = SessionLocal()
+    run = db.query(AgentRun).filter(AgentRun.id == run_id).first()
+    if run:
+        run.status = "EXECUTING"
+        db.commit()
+    db.close()
+
+async def reject_workflow(run_id: int):
+    """Marks the workflow as FAILED due to user rejection."""
+    db = SessionLocal()
+    try:
+        run = db.query(AgentRun).filter(AgentRun.id == run_id).first()
+        if run:
+            run.status = "FAILED"
+            run.errors = (run.errors or []) + ["User rejected the execution plan."]
+            db.commit()
+            
+            # Update Notion to reflect the rejection
+            if run.notion_task_id:
+                await update_notion_task_status(run.notion_task_id, "FAILED")
+    except Exception as e:
+        print(f"[DB] Rejection sync failed: {e}")
+    finally:
+        db.close()
