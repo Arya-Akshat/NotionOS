@@ -17,7 +17,7 @@ VALID_NOTION_STATUSES = {"Pending", "In Progress", "COMPLETED", "FAILED"}
 
 TOOL_MAP: dict[str, Any] = {
     "search_jobs":          lambda **kw: browser_tool.search_and_extract(kw.get("query", "backend internship jobs")),
-    "create_repo":          lambda **kw: github_tool.create_repo(name=kw.get("name", "new-project"), description=kw.get("description", "")),
+    "create_repo":          lambda **kw: github_tool.create_repo(name=kw.get("name") or kw.get("repo_name") or "new-project", description=kw.get("description", "")),
     "create_issue":         lambda **kw: github_tool.create_issue(owner=kw.get("owner", ""), repo=kw.get("repo", ""), title=kw.get("title", ""), body=kw.get("body", "")),
         "github_open_pr":       lambda **kw: github_tool.github_open_pr(
                                                                 owner=kw.get("owner", ""),
@@ -144,8 +144,10 @@ async def execute_tools(state: AgentState) -> AgentState:
             
             outputs["scaffolding"] = res
             if res.get("success"):
-                state["status"] = "COMPLETED"
                 state["current_step"] = current_step + 1
+                if state["current_step"] >= len(plan):
+                    if state.get("status") != "FAILED":
+                        state["status"] = "COMPLETED"
             else:
                 state["status"] = "FAILED"
                 state["errors"] = state.get("errors", []) + res.get("errors", [])

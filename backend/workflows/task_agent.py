@@ -428,11 +428,23 @@ async def run_workflow(page_id: str, title: str, run_id: int):
     Main entry point called by the watcher.
     """
     from workers.notion_watcher import PROCESSING_TASK_IDS
+    from tools.notion_tool import get_page_content
     print(f"[Agent] Starting workflow for run {run_id}: {title}")
     try:
+        # Fetch full page body for context-rich planning
+        body = await get_page_content(page_id)
+        
+        # CLEANUP: Strip previous agent status/logs from the body to avoid confusing the planner.
+        # Everything after these headers is usually agent-generated.
+        if body:
+            import re
+            body = re.split(r"(?i)##\s*📍|---\s*Proposed\s*Actions|📍\s*Project\s*Status", body)[0].strip()
+            
+        task_text = f"{title}\n\n{body}" if body else title
+        
         initial_state = {
             "task_id": page_id,
-            "task_text": title,
+            "task_text": task_text,
             "status": "PLANNING",
             "goal": title,
             "execution_plan": [],

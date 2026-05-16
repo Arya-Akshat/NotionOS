@@ -139,11 +139,18 @@ logger = logging.getLogger(__name__)
 # The planner list is intentionally restricted to prevent invalid actions.
 # ---------------------------------------------------------------------------
 
-IMPLEMENTED_TOOLS = {
-    "search_jobs", "create_repo", "create_issue",
-    "fill_forms", "web_search", "update_notion_status",
-    "github_open_pr", "github_pr_review_summary",
+TOOL_DESCRIPTIONS = {
+    "create_repo": "Creates a new GitHub repository. Use for 'create repo', 'initialize github'. args: {name, description}",
+    "create_issue": "Creates a GitHub issue. Use for 'open issue', 'report bug'. args: {owner, repo, title, body}",
+    "github_open_pr": "Creates a PR with a new file. Use for 'open PR', 'submit code'. args: {owner, repo, title, body, branch_name, file_path, file_content}",
+    "github_pr_review_summary": "Reviews a PR and posts a summary. args: {owner, repo, pull_number}",
+    "web_search": "Searches the web for info/research. args: {query}",
+    "fill_forms": "Automates browser form submission. args: {url, form_data}",
+    "search_jobs": "Extracts job listings. args: {query}",
+    "update_notion_status": "Updates current task status. args: {status}"
 }
+
+IMPLEMENTED_TOOLS = set(TOOL_DESCRIPTIONS.keys())
 
 
 class ActionStep(BaseModel):
@@ -374,7 +381,7 @@ def _should_use_heuristic_first(task_text: str) -> bool:
 
 
 # Build tool description block dynamically — ONLY implemented tools for the planner
-_TOOL_LINES = "\n".join(f"- {t}" for t in sorted(IMPLEMENTED_TOOLS))
+_TOOL_LINES = "\n".join([f"- {name}: {desc}" for name, desc in TOOL_DESCRIPTIONS.items()])
 
 PROMPT = PromptTemplate.from_template(
     "You are an AI assistant orchestrating workflow tasks.\n"
@@ -460,10 +467,6 @@ async def parse_intent(task_title: str, task_text: str) -> dict:
 
     try:
         print(f"[Planner] Analyzing task: {task_text}")
-
-        if _should_use_heuristic_first(task_text):
-            print("[Planner] Using heuristic-first planner for deterministic task intent")
-            return _heuristic_plan(task_text)
 
         # 3. Try PRIMARY: Groq Native SDK
         if config.GROQ_API_KEY:

@@ -395,3 +395,44 @@ async def write_scaffolding_result(page_id: str, project_name: str, project_url:
     try:
         requests.patch(url, headers=_get_headers(), json={"children": children}, timeout=DEFAULT_TIMEOUT)
     except: pass
+async def get_page_content(page_id: str) -> str:
+    """
+    Fetches ALL text content (block children) of a Notion page using pagination.
+    """
+    url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+    text_parts = []
+    has_more = True
+    start_cursor = None
+    
+    try:
+        while has_more:
+            params = {"page_size": 100}
+            if start_cursor:
+                params["start_cursor"] = start_cursor
+                
+            response = requests.get(url, headers=_get_headers(), params=params, timeout=DEFAULT_TIMEOUT)
+            if response.status_code != 200:
+                print(f"[Notion] Failed to fetch page content: {response.status_code}")
+                break
+                
+            data = response.json()
+            blocks = data.get("results", [])
+            
+            for block in blocks:
+                b_type = block.get("type")
+                # List of blocks that typically contain readable text
+                text_containers = ["paragraph", "heading_1", "heading_2", "heading_3", "bulleted_list_item", "numbered_list_item", "quote", "to_do", "callout", "toggle", "code"]
+                
+                if b_type in text_containers:
+                    rich_text = block.get(b_type, {}).get("rich_text", [])
+                    plain_text = "".join([t.get("plain_text", "") for t in rich_text])
+                    if plain_text:
+                        text_parts.append(plain_text)
+            
+            has_more = data.get("has_more", False)
+            start_cursor = data.get("next_cursor")
+            
+        return "\n".join(text_parts)
+    except Exception as e:
+        print(f"[Notion] Error fetching page content: {e}")
+        return ""

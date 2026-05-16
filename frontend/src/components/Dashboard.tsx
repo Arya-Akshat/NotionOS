@@ -365,35 +365,29 @@ export default function Dashboard() {
                       const plan = currentRun?.execution_plan || [];
                       const firstStep = plan[0];
                       
-                      if (firstStep?.type === "scaffolding") {
-                        const preview = firstStep.data?.workspace_preview;
-                        if (preview) {
-                          return (
-                            <pre className="text-xs text-blue-300 font-mono whitespace-pre-wrap leading-relaxed">
-                              {preview}
-                            </pre>
-                          );
-                        }
-                        return (
-                          <ul className="space-y-2 text-xs text-gray-400 font-mono">
-                            <li>• Create parent page: <span className="text-blue-300">{firstStep.data?.project_name}</span></li>
-                            <li>• Create Project Brief</li>
-                            <li>• Create Roadmap</li>
-                            <li>• Create Task Tracker database</li>
-                            <li>• Set up views and execution log</li>
-                          </ul>
-                        );
-                      }
-
+                      const hasScaffolding = firstStep?.type === "scaffolding";
+                      const scaffoldingPreview = hasScaffolding ? firstStep.data?.workspace_preview : null;
+                      const standardSteps = hasScaffolding ? plan.slice(1) : plan;
+                      
                       return (
-                        <ul className="space-y-2">
-                          {plan.map((step: any, idx: number) => (
-                            <li key={idx} className="flex items-center gap-2 text-xs text-gray-400">
-                              <span className="text-amber-500/40 font-mono w-4">{idx + 1}.</span>
-                              <span className="text-blue-300 font-mono">{typeof step === 'string' ? step : step.tool}</span>
-                            </li>
-                          ))}
-                        </ul>
+                        <div className="space-y-4">
+                          {scaffoldingPreview && (
+                            <pre className="text-xs text-blue-300 font-mono whitespace-pre-wrap leading-relaxed bg-black/40 p-3 rounded border border-blue-500/20">
+                              {scaffoldingPreview}
+                            </pre>
+                          )}
+                          
+                          {standardSteps.length > 0 && (
+                            <ul className="space-y-2 mt-2">
+                              {standardSteps.map((step: any, idx: number) => (
+                                <li key={idx} className="flex items-center gap-2 text-xs text-gray-400">
+                                  <span className="text-amber-500/40 font-mono w-4">{hasScaffolding ? idx + 2 : idx + 1}.</span>
+                                  <span className="text-emerald-300 font-mono">{typeof step === 'string' ? step : step.tool}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       );
                     })()}
                   </div>

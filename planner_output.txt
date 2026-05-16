@@ -1,0 +1,52 @@
+/Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/langchain_core/_api/deprecation.py:25: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic.v1.fields import FieldInfo as FieldInfoV1
+{'timestamp': '2026-05-16T11:14:26.017838Z', 'phase': 'phase-3', 'component': 'WorkspaceContextBuilder', 'level': 'WARNING', 'event': 'mcp_context_fetch_error', 'detail': 'slice(None, 5, None)'}
+an error occurred during closing of asynchronous generator <async_generator object stdio_client at 0x109708bc0>
+asyncgen: <async_generator object stdio_client at 0x109708bc0>
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/anyio/_backends/_asyncio.py", line 783, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | BaseExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    | GeneratorExit
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/mcp/client/stdio/__init__.py", line 183, in stdio_client
+    anyio.create_task_group() as tg,
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/anyio/_backends/_asyncio.py", line 789, in __aexit__
+    if self.cancel_scope.__exit__(type(exc), exc, exc.__traceback__):
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/anyio/_backends/_asyncio.py", line 461, in __exit__
+    raise RuntimeError(
+    ...<2 lines>...
+    )
+RuntimeError: Attempted to exit cancel scope in a different task than it was entered in
+Is scaffolding? True
+[MCP] Establishing connection to Notion MCP server...
+[MCP] Successfully connected to Notion MCP Server.
+[Planner] Analyzing task: 
+Launch a new AI Marketing App.
+
+First, search the web for "latest AI marketing automation trends 2024" to gather context. 
+
+Next, create a repository named ai-marketing-v1 with the description "A cutting edge AI marketing platform". 
+
+Inside that repo, open an issue titled "Implement landing page" with the body "We need a Next.js landing page with Tailwind". 
+
+Then, open a pull request titled "Setup NextJS frontend" with the body "Initial boilerplate commit". 
+
+After that, review pull request #1 to ensure the code looks good. 
+
+Finally, submit the form at "https://example.com/register" to reserve our domain name, and update the notion status to "Done".
+
+[Planner] Trying Groq Native (Primary)
+RESULT: {'success': True, 'provider': 'Groq_Native', 'data': {'goal': 'Launch a new AI Marketing App', 'actions': [{'tool': 'web_search', 'args': {'query': 'latest AI marketing automation trends 2024'}}, {'tool': 'create_repo', 'args': {'name': 'ai-marketing-v1', 'description': 'A cutting edge AI marketing platform'}}, {'tool': 'create_issue', 'args': {'title': 'Implement landing page', 'body': 'We need a Next.js landing page with Tailwind', 'repo': 'ai-marketing-v1'}}, {'tool': 'github_open_pr', 'args': {'title': 'Setup NextJS frontend', 'body': 'Initial boilerplate commit', 'repo': 'ai-marketing-v1'}}, {'tool': 'github_pr_review_summary', 'args': {'pr_number': 1, 'repo': 'ai-marketing-v1'}}, {'tool': 'fill_forms', 'args': {'url': 'https://example.com/register', 'data': {'domain_name': 'ai-marketing-v1'}}}, {'tool': 'update_notion_status', 'args': {'status': 'Done'}}]}, 'error': None}

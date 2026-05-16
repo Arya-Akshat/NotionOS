@@ -26,23 +26,22 @@ async def plan_workflow(state: AgentState):
     """
     
     from agent.intent_parser import is_project_scaffolding_task, generate_scaffolding_plan
-    
+    print(f"[Planner] Input Task Text: {state['task_text'][:500]}...")
     try:
-        # Check for scaffolding intent first
-        if is_project_scaffolding_task(state["task_text"]):
-            plan = generate_scaffolding_plan(
+        from agent.intent_parser import is_project_scaffolding_task, generate_scaffolding_plan
+        is_scaffolding = is_project_scaffolding_task(state["task_text"])
+        print(f"[Planner] is_scaffolding: {is_scaffolding}")
+        scaffolding_plan = None
+        if is_scaffolding:
+            scaffolding_plan = generate_scaffolding_plan(
                 state["task_text"],
                 state.get("workspace_style", {}),
                 state.get("workspace_context", {}).get("related_pages", [])
             )
-            state["execution_plan"] = [{"type": "scaffolding", "data": plan}]
             state["is_scaffolding"] = True
-            state["workspace_preview"] = plan["workspace_preview"]
-            state["goal"] = plan["goal"]
-            state["status"] = "WAITING_FOR_APPROVAL"
-            return state
+            state["workspace_preview"] = scaffolding_plan["workspace_preview"]
 
-        # Wrap planner in a 30-second timeout
+        # Wrap planner in a 30-second timeout to fetch other tool actions
         parsed_result = await asyncio.wait_for(
             parse_intent("Task", state["task_text"]),
             timeout=30.0
@@ -50,11 +49,22 @@ async def plan_workflow(state: AgentState):
         
         if parsed_result["success"]:
             state["goal"] = parsed_result["data"]["goal"]
-            state["execution_plan"] = parsed_result["data"]["actions"]
+            llm_plan = parsed_result["data"]["actions"]
+            
+            if is_scaffolding:
+                state["execution_plan"] = [{"type": "scaffolding", "data": scaffolding_plan}] + llm_plan
+            else:
+                state["execution_plan"] = llm_plan
+                
             state["status"] = "WAITING_FOR_APPROVAL"
         else:
-            state["errors"] = state.get("errors", []) + [parsed_result["error"]]
-            state["status"] = "FAILED"
+            if is_scaffolding:
+                state["execution_plan"] = [{"type": "scaffolding", "data": scaffolding_plan}]
+                state["goal"] = scaffolding_plan["goal"]
+                state["status"] = "WAITING_FOR_APPROVAL"
+            else:
+                state["errors"] = state.get("errors", []) + [parsed_result["error"]]
+                state["status"] = "FAILED"
             
     except asyncio.TimeoutError:
         state["errors"] = state.get("errors", []) + ["Planner timed out after 30 seconds"]
