@@ -145,7 +145,13 @@ def delete_run(run_id: int, db: Session = Depends(get_db)):
 # WebSocket – streams new agent-run updates to the dashboard
 # ---------------------------------------------------------------------------
 
-connected_clients: Set[WebSocket] = set()
+from utils.logging_utils import (
+    connected_clients, 
+    set_app_loop, 
+    dispatch_broadcast, 
+    _broadcast_event,
+    log_tool_call
+)
 
 @app.websocket("/ws/logs")
 async def websocket_logs(ws: WebSocket):
@@ -153,61 +159,15 @@ async def websocket_logs(ws: WebSocket):
     connected_clients.add(ws)
     try:
         while True:
-            # Client can send heartbeat messages if needed
             await ws.receive_text()
     except WebSocketDisconnect:
         connected_clients.discard(ws)
     except Exception:
         connected_clients.discard(ws)
 
-async def broadcast(message: dict):
-    """Utility to push a message to all connected dashboard clients."""
-    if not connected_clients:
-        return
-    
-    payload = json.dumps(message)
-    # Create a copy of the set to iterate safely without mutation errors
-    clients_to_notify = list(connected_clients)
-    
-    for ws in clients_to_notify:
-        try:
-            await ws.send_text(payload)
-        except Exception:
-            connected_clients.discard(ws)
-
-
-def dispatch_broadcast(message: dict):
-    """
-    Thread-safe dispatcher for WebSocket broadcasts.
-    Can be called from the main async loop or worker threads.
-    """
-    global app_loop
-    if app_loop is None:
-        print("[WS] Cannot dispatch: app_loop not initialized.")
-        return
-    
-    if app_loop.is_closed():
-        print("[WS] Cannot dispatch: app_loop is closed.")
-        return
-
-    def _on_done(fut):
-        try:
-            fut.result()
-        except Exception as e:
-            print(f"[WS] Broadcast task failed: {e}")
-
-    try:
-        import threading
-        if threading.current_thread() is threading.main_thread():
-            # Already on the main thread loop
-            task = asyncio.create_task(broadcast(message))
-            task.add_done_callback(_on_done)
-        else:
-            # Called from a worker thread
-            future = asyncio.run_coroutine_threadsafe(broadcast(message), app_loop)
-            future.add_done_callback(_on_done)
-    except Exception as e:
-        print(f"[WS] Critical dispatch error: {e}")
+@app.on_event("startup")
+async def startup_event():
+    set_app_loop(asyncio.get_running_loop())
 
 from pydantic import BaseModel
 class EmptyPayload(BaseModel):

@@ -46,51 +46,50 @@ class ProjectScaffolder:
         }
         
         try:
-            # STEP 1: Create Parent Page
             await append_execution_update(task_page_id, "Parent Page", "running")
             parent_id = await self._create_parent_page(project_name, task_page_id, workspace_style)
             result["parent_page_id"] = parent_id
             result["pages_created"].append("Parent Page")
             result["execution_log"].append(f"✅ Created parent page '{project_name}'")
             await append_execution_update(task_page_id, "Parent Page", "complete")
+            self._log_step(workflow_id, "Parent Page Created", {"name": project_name}, True, {"id": parent_id})
             await asyncio.sleep(0.5)
 
-            # STEP 2: Create Project Brief
-            await append_execution_update(task_page_id, "Project Brief", "running")
             try:
                 brief_id = await self._create_project_brief(parent_id, project_name, workspace_style, related_pages)
                 result["brief_page_id"] = brief_id
                 result["pages_created"].append("Project Brief")
                 result["execution_log"].append("✅ Created 'Project Brief'")
                 await append_execution_update(task_page_id, "Project Brief", "complete")
+                self._log_step(workflow_id, "Project Brief Created", {"parent": parent_id}, True, {"id": brief_id})
             except Exception as e:
                 result["errors"].append(f"Brief creation failed: {e}")
                 result["execution_log"].append(f"❌ Failed to create 'Project Brief': {e}")
                 await append_execution_update(task_page_id, "Project Brief", "failed", str(e))
+                self._log_step(workflow_id, "Project Brief Failed", {"error": str(e)}, False)
             await asyncio.sleep(0.5)
 
-            # STEP 3: Create Roadmap
-            await append_execution_update(task_page_id, "Roadmap", "running")
             try:
                 roadmap_id = await self._create_roadmap(parent_id, project_name, result.get("brief_page_id"), workspace_style, related_pages)
                 result["roadmap_page_id"] = roadmap_id
                 result["pages_created"].append("Roadmap")
                 result["execution_log"].append("✅ Created 'Roadmap'")
                 await append_execution_update(task_page_id, "Roadmap", "complete")
+                self._log_step(workflow_id, "Project Roadmap Created", {"parent": parent_id}, True, {"id": roadmap_id})
             except Exception as e:
                 result["errors"].append(f"Roadmap creation failed: {e}")
                 result["execution_log"].append(f"❌ Failed to create 'Roadmap': {e}")
                 await append_execution_update(task_page_id, "Roadmap", "failed", str(e))
+                self._log_step(workflow_id, "Project Roadmap Failed", {"error": str(e)}, False)
             await asyncio.sleep(0.5)
 
-            # STEP 4: Create Task Database
-            await append_execution_update(task_page_id, "Task Tracker", "running")
             try:
                 db_id = await self._create_task_database(parent_id, project_name, workspace_style, result.get("brief_page_id"), result.get("roadmap_page_id"))
                 result["database_id"] = db_id
                 result["pages_created"].append("Task Tracker")
                 result["execution_log"].append("✅ Created 'Task Tracker' database")
                 await append_execution_update(task_page_id, "Task Tracker", "complete")
+                self._log_step(workflow_id, "Task Tracker DB Created", {"parent": parent_id}, True, {"id": db_id})
                 
                 # STEP 5: Create Views
                 await append_execution_update(task_page_id, "Views", "running")
@@ -99,13 +98,16 @@ class ProjectScaffolder:
                     await self._add_view_fallback_callout(parent_id, view_res["fallback_message"])
                     result["execution_log"].append("⚠️ Views created via guidance callout")
                     await append_execution_update(task_page_id, "Views", "complete", "Guidance added")
+                    self._log_step(workflow_id, "Views (Manual Guidance)", {"db": db_id}, True)
                 else:
                     result["execution_log"].append("✅ Kanban + Calendar views created")
                     await append_execution_update(task_page_id, "Views", "complete")
+                    self._log_step(workflow_id, "Kanban/Calendar Views Added", {"db": db_id}, True)
             except Exception as e:
                 result["errors"].append(f"Database/View creation failed: {e}")
                 result["execution_log"].append(f"❌ Failed to create 'Task Tracker': {e}")
                 await append_execution_update(task_page_id, "Task Tracker", "failed", str(e))
+                self._log_step(workflow_id, "Database/Views Failed", {"error": str(e)}, False)
             await asyncio.sleep(0.5)
 
             # STEP 6: Append Execution Log
@@ -528,3 +530,18 @@ class ProjectScaffolder:
                 requests.post(url, headers=headers, json=payload, timeout=10)
             except Exception as e:
                 print(f"[ProjectScaffolder] Failed to add starter task '{task['Name']}': {e}")
+
+    def _log_step(self, workflow_id, step_name, input_data, success=True, output=None):
+        """Emits a tool-call log that appears in the dashboard in real-time."""
+        if not workflow_id:
+            return
+        try:
+            from utils.logging_utils import log_tool_call
+            log_tool_call(
+                agent_run_id=int(workflow_id),
+                tool_name=f"🏗️ {step_name}",
+                tool_input=input_data,
+                result={"success": success, "data": output}
+            )
+        except Exception as e:
+            print(f"[ProjectScaffolder] Dashboard logging failed: {e}")

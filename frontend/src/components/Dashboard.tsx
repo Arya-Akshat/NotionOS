@@ -429,7 +429,9 @@ export default function Dashboard() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-blue-300 font-bold font-mono text-sm">{l.tool_name}</span>
+                      <span className={`font-bold font-mono text-sm ${l.tool_name.includes('🏗️') ? 'text-violet-400' : 'text-blue-300'}`}>
+                        {l.tool_name}
+                      </span>
                       {l.duration_ms && (
                         <span className="text-gray-600 text-[10px] font-mono">{l.duration_ms}ms</span>
                       )}

@@ -16,19 +16,9 @@ from agents.executor_agent import ExecutorAgent
 from database import SessionLocal
 from models.logs import AgentRun, ToolCallLog
 from tools.notion_tool import update_notion_task_status, append_log_to_page, append_result_to_page
+from utils.logging_utils import log_tool_call, _broadcast_event
 
-# ---------------------------------------------------------------------------
-# WebSocket broadcast bridge — imported lazily at call-time to avoid
-# circular imports (main.py imports us, we import main's broadcast).
-# ---------------------------------------------------------------------------
 
-def _broadcast_event(event_type: str, payload: dict):
-    """Fire-and-forget broadcast to connected dashboard clients via thread-safe dispatcher."""
-    try:
-        from main import dispatch_broadcast
-        dispatch_broadcast({"type": event_type, **payload})
-    except Exception as e:
-        print(f"[WS] Broadcast trigger failed ({event_type}): {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -131,33 +121,7 @@ async def sync_agent_run(state: AgentState):
     return state
 
 
-def log_tool_call(agent_run_id: int, tool_name: str, tool_input: dict, result: dict):
-    """Writes a single tool-call record with input, output, and duration."""
-    db = SessionLocal()
-    try:
-        entry = ToolCallLog(
-            agent_run_id=agent_run_id,
-            tool_name=tool_name,
-            tool_input=tool_input,
-            status="success" if result.get("success") else "failed",
-            tool_output=result.get("data"),
-            error_message=result.get("error"),
-            duration_ms=result.get("duration_ms"),
-        )
-        db.add(entry)
-        db.commit()
-        db.refresh(entry)
-        _broadcast_event("tool_call_logged", {
-            "run_id": agent_run_id,
-            "log_id": entry.id,
-            "tool_name": tool_name,
-            "status": entry.status,
-            "duration_ms": result.get("duration_ms"),
-        })
-    except Exception as e:
-        print(f"[DB] Failed to log tool call: {e}")
-    finally:
-        db.close()
+
 
 
 # ---------------------------------------------------------------------------
