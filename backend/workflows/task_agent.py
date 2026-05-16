@@ -285,6 +285,9 @@ async def finalize_node(state: AgentState):
     """Final node: updates Notion page with status and concise summary."""
     page_id = state.get("task_id", "")
     status = state.get("status", "COMPLETED")
+    
+    print(f"[Finalize] Finalizing Run {state.get('workflow_id')} for Page {page_id}")
+    print(f"[Finalize] Current State Status: {status}")
 
     # Build concise summary
     plan = state.get("execution_plan", [])
@@ -329,9 +332,9 @@ async def finalize_node(state: AgentState):
         try:
             run = db.query(AgentRun).filter(AgentRun.id == wf_id).first()
             if run:
-                run.status = "COMPLETED"
+                run.status = status
                 db.commit()
-                print(f"[Finalize] Run {wf_id} marked COMPLETED in DB.")
+                print(f"[Finalize] Run {wf_id} marked {status} in DB.")
         finally:
             db.close()
 

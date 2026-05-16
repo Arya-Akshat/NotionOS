@@ -38,7 +38,7 @@ TOOL_MAP: dict[str, Any] = {
                                                             ),
     "fill_forms":           lambda **kw: browser_tool.fill_form_and_submit(url=kw.get("url", ""), form_data=kw.get("form_data", {}), submit_selector=kw.get("submit_selector", "")),
     "web_search":           lambda **kw: browser_tool.search_and_extract(kw.get("query", "")),
-    "update_notion_status": lambda **kw: notion_tool.update_notion_task_status(page_id=kw.get("page_id", ""), new_status=kw.get("status", "In Progress")),
+    "update_notion_status": lambda **kw: notion_tool.update_notion_task_status(page_id=kw.get("page_id", ""), status=kw.get("status", "In Progress")),
 }
 
 MAX_RETRIES = 2

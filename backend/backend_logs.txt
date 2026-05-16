@@ -1,0 +1,481 @@
+/Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/langchain_core/_api/deprecation.py:25: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic.v1.fields import FieldInfo as FieldInfoV1
+INFO:     Started server process [35610]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+[Lifespan] Starting MCP client...
+[MCP] Establishing connection to Notion MCP server...
+[MCP] Successfully connected to Notion MCP Server.
+[Watcher] Starting Notion watcher (poll every 10s)...
+INFO:     127.0.0.1:53086 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53088 - "WebSocket /ws/logs" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:53086 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53104 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53123 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:53132 - "WebSocket /ws/logs" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:53123 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53123 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+{'timestamp': '2026-05-16T13:56:36.270792Z', 'phase': 'phase-3', 'component': 'WorkspaceContextBuilder', 'level': 'WARNING', 'event': 'mcp_context_fetch_error', 'detail': 'slice(None, 5, None)'}
+[Watcher] Created run 1 for 362c2019-7181-8024-b60e-e3cd971c03fd synchronously.
+[Notion] Updating AgentStatus to: 'In Progress'
+{'timestamp': '2026-05-16T13:56:34.234044Z', 'phase': 'phase-2', 'component': 'notion_tool', 'level': 'INFO', 'event': 'mcp_tool_call', 'detail': 'update_page (In Progress)', 'trace_id': ''}
+[Agent] Starting workflow for run 1: Marketing AI Startup Launch
+[WS] Cannot dispatch: app_loop is closed.
+[Planner] Input Task Text: Marketing AI Startup Launch...
+[Planner] is_scaffolding: True
+[Planner] Analyzing task: Marketing AI Startup Launch
+[Planner] Trying Groq Native (Primary)
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+[Agent] Workflow 1 finished, lock released.
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "POST /api/runs/1/approve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[Agent] Starting workflow for run 1: Launch a marketing AI startup by creating a GitHub repository, searching for information, creating an issue, opening a pull request, and updating the task status in Notion
+[WS] Cannot dispatch: app_loop is closed.
+[Executor] is_scaffolding=None
+[Executor] plan type=scaffolding
+[Executor] 🏗️ Detected Scaffolding Plan — routing to ProjectScaffolder
+[ProjectScaffolder] STEP 1: Creating parent page 'Marketing Ai Startup Launch' as sub-page of 362c2019-7181-8024-b60e-e3cd971c03fd...
+INFO:     127.0.0.1:53139 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+[ProjectScaffolder] Parent page created: 362c2019-7181-815d-8f91-f345a906160a
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53139 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[ProjectScaffolder] STEP 2: Creating Project Brief for 'Marketing Ai Startup Launch'...
+[ProjectScaffolder] Project Brief created: 362c2019-7181-819d-8479-f74d18868f84
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53171 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[ProjectScaffolder] STEP 3: Creating Roadmap for 'Marketing Ai Startup Launch'...
+[ProjectScaffolder] Roadmap created: 362c2019-7181-8163-847a-dff824f7357d
+[WS] Cannot dispatch: app_loop is closed.
+[ProjectScaffolder] STEP 4: Creating Task Tracker database for 'Marketing Ai Startup Launch'...
+[ProjectScaffolder] Sending direct HTTP POST to create database 'Task Tracker'...
+[ProjectScaffolder] Task Tracker database created: 362c2019-7181-819e-891d-dbf4c2240690
+[ProjectScaffolder] Adding 5 starter tasks to DB 362c2019-7181-819e-891d-dbf4c2240690...
+[WS] Cannot dispatch: app_loop is closed.
+[ProjectScaffolder] STEP 5: Creating database views for 362c2019-7181-819e-891d-dbf4c2240690...
+[ProjectScaffolder] Attempting Kanban view...
+INFO:     127.0.0.1:53171 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+ERROR:    Traceback (most recent call last):
+  File "/Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/starlette/routing.py", line 701, in lifespan
+    await receive()
+  File "/Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/uvicorn/lifespan/on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.4_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/queues.py", line 186, in get
+    await getter
+asyncio.exceptions.CancelledError: Cancelled via cancel scope 11b47d310 by <Task pending name='Task-63' coro=<RunnableCallable.ainvoke() running at /Users/gurudev/Desktop/VS Code/Dunno/Notion Challenge/backend/venv/lib/python3.14/site-packages/langgraph/_internal/_runnable.py:473> cb=[Task.task_wakeup()]>
+
+[MCP] Tool 'create_view' failed: Method create_view not found. Attempting reconnect...
+[MCP] Disconnecting...
+INFO:     127.0.0.1:53183 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53171 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[MCP] Error during disconnect: Attempted to exit cancel scope in a different task than it was entered in
+[MCP] Establishing connection to Notion MCP server...
+INFO:     127.0.0.1:53139 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[MCP] Successfully connected to Notion MCP Server.
+[ProjectScaffolder] View creation error: Method create_view not found
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[Notion] Updating AgentStatus to: 'Done'
+{'timestamp': '2026-05-16T13:57:43.263867Z', 'phase': 'phase-2', 'component': 'notion_tool', 'level': 'INFO', 'event': 'mcp_tool_call', 'detail': 'update_page (Done)', 'trace_id': ''}
+[ProjectScaffolder] Run 1 marked COMPLETED in DB.
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 2/7: create_repo
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53185 - "GET /api/runs HTTP/1.1" 200 OK
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 3/7: web_search
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53139 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 4/7: create_issue
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53185 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53202 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 5/7: github_open_pr
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 6/7: github_pr_review_summary
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53185 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53139 - "GET /api/runs HTTP/1.1" 200 OK
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 7/7: update_notion_status
+[Notion] Updating AgentStatus to: 'COMPLETED'
+{'timestamp': '2026-05-16T13:58:19.216314Z', 'phase': 'phase-2', 'component': 'notion_tool', 'level': 'INFO', 'event': 'mcp_tool_call', 'detail': 'update_page (COMPLETED)', 'trace_id': ''}
+INFO:     127.0.0.1:53230 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53218 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53185 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53230 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53185 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53218 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53218 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53218 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+Error in http client { status: 400, statusText: 'Bad Request' }
+Error in tool call 400 Bad Request
+HttpClientError encountered, returning structured error { status: 400 }
+[WS] Cannot dispatch: app_loop is closed.
+[Finalize] Finalizing Run 1 for Page 362c2019-7181-8024-b60e-e3cd971c03fd
+[Finalize] Current State Status: COMPLETED
+[Notion] Updating AgentStatus to: 'COMPLETED'
+{'timestamp': '2026-05-16T13:58:21.231151Z', 'phase': 'phase-2', 'component': 'notion_tool', 'level': 'INFO', 'event': 'mcp_tool_call', 'detail': 'update_page (COMPLETED)', 'trace_id': ''}
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+[Notion] Appending log to 362c2019-7181-8024-b60e-e3cd971c03fd
+[Notion] Appending results to 362c2019-7181-8024-b60e-e3cd971c03fd
+[Finalize] Run 1 marked COMPLETED in DB.
+[Agent] Workflow 1 finished, lock released.
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53232 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53259 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53259 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53259 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53259 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53259 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53259 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53259 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53259 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53275 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53275 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53275 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53275 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53275 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53275 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53275 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53275 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53279 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53279 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53279 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53279 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53279 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53279 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53279 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53279 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53285 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53285 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53285 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53285 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53285 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53285 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53285 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53296 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "OPTIONS /api/runs/1 HTTP/1.1" 200 OK
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53298 - "DELETE /api/runs/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53298 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53333 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53347 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53362 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53379 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53394 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53421 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53440 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53440 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53440 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53440 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+[Watcher] Created run 1 for 362c2019-7181-8024-b60e-e3cd971c03fd synchronously.
+[Notion] Updating AgentStatus to: 'In Progress'
+{'timestamp': '2026-05-16T14:08:43.108311Z', 'phase': 'phase-2', 'component': 'notion_tool', 'level': 'INFO', 'event': 'mcp_tool_call', 'detail': 'update_page (In Progress)', 'trace_id': ''}
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+{'timestamp': '2026-05-16T14:08:45.485094Z', 'phase': 'phase-3', 'component': 'WorkspaceContextBuilder', 'level': 'WARNING', 'event': 'mcp_context_fetch_error', 'detail': 'slice(None, 5, None)'}
+[Agent] Starting workflow for run 1: Marketing AI Startup Launch
+[WS] Cannot dispatch: app_loop is closed.
+[Planner] Input Task Text: Marketing AI Startup Launch...
+[Planner] is_scaffolding: True
+[Planner] Analyzing task: Marketing AI Startup Launch
+[Planner] Trying Groq Native (Primary)
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+[Agent] Workflow 1 finished, lock released.
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "POST /api/runs/1/approve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[Agent] Starting workflow for run 1: Launch a marketing AI startup by creating a GitHub repository, searching for information, creating an issue, opening a pull request, and updating the task status in Notion
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+[Executor] is_scaffolding=None
+[Executor] plan type=scaffolding
+[Executor] 🏗️ Detected Scaffolding Plan — routing to ProjectScaffolder
+[ProjectScaffolder] STEP 1: Creating parent page 'Marketing Ai Startup Launch' as sub-page of 362c2019-7181-8024-b60e-e3cd971c03fd...
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[ProjectScaffolder] Parent page created: 362c2019-7181-8197-b5e4-fddcbaf89d80
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53448 - "GET /api/runs HTTP/1.1" 200 OK
+[ProjectScaffolder] STEP 2: Creating Project Brief for 'Marketing Ai Startup Launch'...
+[ProjectScaffolder] Project Brief created: 362c2019-7181-8118-ae99-d810f3720655
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[ProjectScaffolder] STEP 3: Creating Roadmap for 'Marketing Ai Startup Launch'...
+[ProjectScaffolder] Roadmap created: 362c2019-7181-81d9-ac38-e3a88cd391e1
+[WS] Cannot dispatch: app_loop is closed.
+[ProjectScaffolder] STEP 4: Creating Task Tracker database for 'Marketing Ai Startup Launch'...
+[ProjectScaffolder] Sending direct HTTP POST to create database 'Task Tracker'...
+[ProjectScaffolder] Task Tracker database created: 362c2019-7181-813a-82d8-e5d0f117b51f
+[ProjectScaffolder] Adding 5 starter tasks to DB 362c2019-7181-813a-82d8-e5d0f117b51f...
+[WS] Cannot dispatch: app_loop is closed.
+[ProjectScaffolder] STEP 5: Creating database views for 362c2019-7181-813a-82d8-e5d0f117b51f...
+[ProjectScaffolder] Attempting Kanban view...
+[MCP] Tool 'create_view' failed: Method create_view not found. Attempting reconnect...
+[MCP] Disconnecting...
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53448 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53485 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[MCP] Error during disconnect: Attempted to exit cancel scope in a different task than it was entered in
+[MCP] Establishing connection to Notion MCP server...
+[MCP] Successfully connected to Notion MCP Server.
+[ProjectScaffolder] View creation error: Method create_view not found
+INFO:     127.0.0.1:53474 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53474 - "GET /api/runs HTTP/1.1" 200 OK
+[Notion] Updating AgentStatus to: 'Done'
+{'timestamp': '2026-05-16T14:09:28.263381Z', 'phase': 'phase-2', 'component': 'notion_tool', 'level': 'INFO', 'event': 'mcp_tool_call', 'detail': 'update_page (Done)', 'trace_id': ''}
+INFO:     127.0.0.1:53474 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[ProjectScaffolder] Run 1 marked COMPLETED in DB.
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 2/7: create_repo
+[WS] Cannot dispatch: app_loop is closed.
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 3/7: web_search
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53485 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53474 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 4/7: create_issue
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53487 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53485 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 5/7: github_open_pr
+[WS] Cannot dispatch: app_loop is closed.
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 6/7: github_pr_review_summary
+[WS] Cannot dispatch: app_loop is closed.
+INFO:     127.0.0.1:53485 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[Executor] is_scaffolding=None
+[Executor] plan type=None
+[Executor] Step 7/7: update_notion_status
+[Notion] Updating AgentStatus to: 'COMPLETED'
+{'timestamp': '2026-05-16T14:09:57.415563Z', 'phase': 'phase-2', 'component': 'notion_tool', 'level': 'INFO', 'event': 'mcp_tool_call', 'detail': 'update_page (COMPLETED)', 'trace_id': ''}
+INFO:     127.0.0.1:53485 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53524 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53485 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53524 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53524 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+Error in http client { status: 400, statusText: 'Bad Request' }
+Error in tool call 400 Bad Request
+HttpClientError encountered, returning structured error { status: 400 }
+[WS] Cannot dispatch: app_loop is closed.
+[Finalize] Finalizing Run 1 for Page 362c2019-7181-8024-b60e-e3cd971c03fd
+[Finalize] Current State Status: COMPLETED
+[Notion] Updating AgentStatus to: 'COMPLETED'
+{'timestamp': '2026-05-16T14:09:59.212732Z', 'phase': 'phase-2', 'component': 'notion_tool', 'level': 'INFO', 'event': 'mcp_tool_call', 'detail': 'update_page (COMPLETED)', 'trace_id': ''}
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+[Notion] Appending log to 362c2019-7181-8024-b60e-e3cd971c03fd
+[Notion] Appending results to 362c2019-7181-8024-b60e-e3cd971c03fd
+[Finalize] Run 1 marked COMPLETED in DB.
+[Agent] Workflow 1 finished, lock released.
+INFO:     127.0.0.1:53524 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53527 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53545 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53551 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53487 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53568 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53567 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53582 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53592 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53597 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53603 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53608 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53581 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53617 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53618 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53641 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53640 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53658 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53657 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53675 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53674 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53699 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53698 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53716 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53715 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53733 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53732 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53751 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53750 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53768 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53767 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53794 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53793 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53812 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53811 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53835 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53834 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53851 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53849 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53869 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53868 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53895 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53894 - "GET /api/runs/1/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53911 - "GET /api/runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53909 - "GET /api/runs/1/logs HTTP/1.1" 200 OK

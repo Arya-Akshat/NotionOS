@@ -69,8 +69,8 @@ def _normalize_notion_status(status: str) -> str:
         "planning": "Planning",
         "executing": "In Progress",
         "in progress": "In Progress",
-        "completed": "Completed",
-        "failed": "Failed",
+        "completed": "COMPLETED",
+        "failed": "FAILED",
     }
     return mapping.get(key, status)
 
@@ -133,6 +133,7 @@ def read_notion_tasks(database_id: str = None):
 
 async def update_notion_task_status(page_id: str, status: str):
     label = _normalize_notion_status(status)
+    print(f"[Notion] Updating AgentStatus to: '{label}'")
     properties = {
         "AgentStatus": {
             "select": {"name": label}

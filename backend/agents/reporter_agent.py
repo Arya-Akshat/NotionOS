@@ -45,8 +45,24 @@ class ReporterAgent:
         outputs = state.get("tool_outputs", {})
         total = len(plan)
 
-        # Write Final Summary
+        # Extract links from tool outputs
+        tool_outputs = state.get("tool_outputs", {})
+        link_lines = []
+        for tool_name, output in tool_outputs.items():
+            if not isinstance(output, dict):
+                continue
+            # Look inside 'data' or the root for common URL keys
+            data = output.get("data") if isinstance(output.get("data"), dict) else output
+            url = (data.get("html_url") or
+                   data.get("url") or
+                   data.get("repo_url") or
+                   data.get("link"))
+            if url and isinstance(url, str) and url.startswith("http"):
+                link_lines.append(f"🔗 {tool_name}: {url}")
+
         summary_text = f"Goal: {state.get('goal', '')} | Status: {status} | Steps: {total} | Duration: N/A"
+        if link_lines:
+            summary_text += "\n\n🔗 Links Created:\n" + "\n".join(link_lines)
         
         children = [
             {"object": "block", "type": "divider", "divider": {}},
@@ -56,9 +72,9 @@ class ReporterAgent:
         
         if page_id:
             try:
-                update_notion_task_status(page_id, status)
+                await update_notion_task_status(page_id, status)
                 # mcp append
-                mcp_res = _try_mcp("append_block_children (final)", mcp_client.append_blocks(page_id, children))
+                mcp_res = await _try_mcp("append_block_children (final)", mcp_client.append_blocks(page_id, children))
                 if mcp_res is None:
                     url = f"https://api.notion.com/v1/blocks/{page_id}/children"
                     requests.patch(url, headers=_get_headers(), json={"children": children}, timeout=10)
