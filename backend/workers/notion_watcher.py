@@ -15,80 +15,6 @@ from config import config
 # Track active Notion Page IDs to prevent redundant processing
 PROCESSING_TASK_IDS = set()
 
-async def resume_task(run: AgentRun):
-    """Resumes an approved task from where it left off."""
-    if run.notion_task_id in PROCESSING_TASK_IDS:
-        return
-    PROCESSING_TASK_IDS.add(run.notion_task_id)
-    
-    print(f"[Watcher] Resuming task run {run.id} for page {run.notion_task_id}")
-    try:
-        # Reconstruct state from DB
-        state = {
-            "task_id": run.notion_task_id,
-            "task_text": "", 
-            "status": "EXECUTING",
-            "goal": run.goal or "",
-            "execution_plan": run.execution_plan or [],
-            "current_step": run.current_step or 0,
-            "tool_outputs": run.tool_outputs or {},
-            "errors": run.errors or [],
-            "workflow_id": run.id,
-            "messages": [],
-        }
-        await agent_app.ainvoke(state)
-    except Exception as e:
-        print(f"[Watcher] Resume failed for run {run.id}: {e}")
-        from tools.notion_tool import update_notion_task_status
-        await update_notion_task_status(run.notion_task_id, "FAILED")
-    finally:
-        # Only remove if the run is finished (completed or failed)
-        # Note: In this simple implementation, ainvoke finishes when the graph hits END
-        PROCESSING_TASK_IDS.discard(run.notion_task_id)
-
-
-async def process_task(task: dict, run_id: int):
-    """Run the LangGraph agent for a single Notion task using an existing run_id."""
-    page_id = task["page_id"]
-    title = task.get("title", "")
-    goal = task.get("goal", "")
-    task_text = f"{title}. {goal}" if goal else title
-
-    print(f"[Watcher] Starting execution for run {run_id}: {title} ({page_id})")
-
-    try:
-        # Reset Notion page for a fresh run
-        from tools.notion_tool import write_run_separator
-        await write_run_separator(page_id)
-        
-        # 2. Trigger LangGraph workflow
-        initial_state = {
-            "task_id": page_id,
-            "task_text": task_text,
-            "status": "PLANNING",
-            "goal": goal or title,
-            "execution_plan": [],
-            "current_step": 0,
-            "tool_outputs": {},
-            "errors": [],
-            "workflow_id": run_id,
-            "messages": [],
-        }
-        await agent_app.ainvoke(initial_state)
-    except Exception as e:
-        print(f"[Watcher] Agent execution failed for run {run_id}: {e}")
-        from tools.notion_tool import update_notion_task_status
-        await update_notion_task_status(page_id, "FAILED")
-        db = SessionLocal()
-        try:
-            run = db.query(AgentRun).filter(AgentRun.id == run_id).first()
-            if run:
-                run.status = "FAILED"
-                db.commit()
-        finally:
-            db.close()
-    finally:
-        PROCESSING_TASK_IDS.discard(page_id)
 
 
 async def watch_notion(poll_interval: int = 10):
@@ -118,56 +44,71 @@ async def watch_notion(poll_interval: int = 10):
                 for task in res.get("data", []):
                     page_id = task["page_id"]
                     title = task.get("title", "")
-                    goal = task.get("goal", "")
                     
-                    # GATE 1: In-memory set
+                    # STEP A: Check PROCESSING_TASK_IDS set
                     if page_id in PROCESSING_TASK_IDS:
                         continue
                         
-                    # GATE 2: Database check (Synchronous)
+                    # STEP B: Check DB for existing non-failed run
                     db = SessionLocal()
                     try:
                         existing = db.query(AgentRun).filter(
                             AgentRun.notion_task_id == page_id,
-                            AgentRun.status.notin_(["FAILED", "REJECTED", "COMPLETED"])
+                            AgentRun.status.notin_(["FAILED", "REJECTED"])
                         ).first()
+                        
                         if existing:
+                            if existing.status == "COMPLETED":
+                                await update_notion_task_status(page_id, "Done")
                             continue
                         
-                        # STEP B: Create the AgentRun row RIGHT NOW before dispatching
+                        # STEP C: Add to PROCESSING_TASK_IDS immediately
+                        PROCESSING_TASK_IDS.add(page_id)
+
+                        # STEP D: Create AgentRun row RIGHT NOW synchronously
                         new_run = AgentRun(
                             notion_task_id=page_id,
                             status="PLANNING",
-                            goal=goal or title
+                            goal=title
                         )
                         db.add(new_run)
                         db.commit()
                         db.refresh(new_run)
                         run_id = new_run.id
+                        print(f"[Watcher] Created run {run_id} for {page_id} synchronously.")
+                    except Exception as e:
+                        print(f"[Watcher] Failed to create run: {e}")
+                        PROCESSING_TASK_IDS.discard(page_id)
+                        continue
                     finally:
                         db.close()
 
-                    # LOCK: Add to processing set
-                    PROCESSING_TASK_IDS.add(page_id)
-                    
-                    # STEP C: Update Notion status to "In Progress" RIGHT NOW synchronously
+                    # STEP E: Update Notion to "In Progress" RIGHT NOW
                     await update_notion_task_status(page_id, "In Progress")
-                    
-                    # STEP D: NOW dispatch to background, passing run_id
-                    print(f"[Watcher] Dispatched task {run_id} for {page_id}")
-                    asyncio.create_task(process_task(task, run_id))
+
+                    # STEP F: NOW dispatch to workflow passing run_id
+                    from workflows.task_agent import run_workflow
+                    asyncio.create_task(run_workflow(page_id, title, run_id))
             
             # 3. Check for resumptions
             db = SessionLocal()
             try:
                 executing_runs = db.query(AgentRun).filter(AgentRun.status == "EXECUTING").all()
                 for run in executing_runs:
+                    # BUG 2 FIX: Skip if already COMPLETED in DB (double check)
+                    if run.status == "COMPLETED":
+                        continue
+                        
                     if run.notion_task_id not in PROCESSING_TASK_IDS:
-                        asyncio.create_task(resume_task(run))
+                        PROCESSING_TASK_IDS.add(run.notion_task_id) # Add to lock
+                        from workflows.task_agent import run_workflow
+                        asyncio.create_task(run_workflow(run.notion_task_id, run.goal or "Resumed", run.id))
                 
                 # Manual Notion approvals
                 waiting_runs = db.query(AgentRun).filter(AgentRun.status == "WAITING_FOR_APPROVAL").all()
                 for run in waiting_runs:
+                    if run.status == "COMPLETED": continue # Skip
+                    
                     if get_approval_status(run.notion_task_id) == "Approved":
                         from workflows.task_agent import approve_workflow
                         approve_workflow(run.id)

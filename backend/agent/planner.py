@@ -21,12 +21,27 @@ class AgentState(TypedDict):
 
 async def plan_workflow(state: AgentState):
     """
-    Analyzes the task and updates state to PLANNING, generating the structured execution plan.
+    Analyzes the task and generates the structured execution plan.
     With 30s timeout and error hardening.
     """
-    state["status"] = "PLANNING"
+    
+    from agent.intent_parser import is_project_scaffolding_task, generate_scaffolding_plan
     
     try:
+        # Check for scaffolding intent first
+        if is_project_scaffolding_task(state["task_text"]):
+            plan = generate_scaffolding_plan(
+                state["task_text"],
+                state.get("workspace_style", {}),
+                state.get("workspace_context", {}).get("related_pages", [])
+            )
+            state["execution_plan"] = [{"type": "scaffolding", "data": plan}]
+            state["is_scaffolding"] = True
+            state["workspace_preview"] = plan["workspace_preview"]
+            state["goal"] = plan["goal"]
+            state["status"] = "WAITING_FOR_APPROVAL"
+            return state
+
         # Wrap planner in a 30-second timeout
         parsed_result = await asyncio.wait_for(
             parse_intent("Task", state["task_text"]),

@@ -360,14 +360,42 @@ export default function Dashboard() {
                   
                   <div className="bg-black/30 rounded-lg p-4 mb-6 border border-amber-500/20">
                     <span className="text-[10px] text-amber-500/60 uppercase font-bold tracking-widest block mb-2">Proposed Actions</span>
-                    <ul className="space-y-2">
-                      {runs.find(r => r.id === selectedRun)?.execution_plan?.map((step: any, idx: number) => (
-                        <li key={idx} className="flex items-center gap-2 text-xs text-gray-400">
-                          <span className="text-amber-500/40 font-mono w-4">{idx + 1}.</span>
-                          <span className="text-blue-300 font-mono">{typeof step === 'string' ? step : step.tool}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {(() => {
+                      const currentRun = runs.find(r => r.id === selectedRun);
+                      const plan = currentRun?.execution_plan || [];
+                      const firstStep = plan[0];
+                      
+                      if (firstStep?.type === "scaffolding") {
+                        const preview = firstStep.data?.workspace_preview;
+                        if (preview) {
+                          return (
+                            <pre className="text-xs text-blue-300 font-mono whitespace-pre-wrap leading-relaxed">
+                              {preview}
+                            </pre>
+                          );
+                        }
+                        return (
+                          <ul className="space-y-2 text-xs text-gray-400 font-mono">
+                            <li>• Create parent page: <span className="text-blue-300">{firstStep.data?.project_name}</span></li>
+                            <li>• Create Project Brief</li>
+                            <li>• Create Roadmap</li>
+                            <li>• Create Task Tracker database</li>
+                            <li>• Set up views and execution log</li>
+                          </ul>
+                        );
+                      }
+
+                      return (
+                        <ul className="space-y-2">
+                          {plan.map((step: any, idx: number) => (
+                            <li key={idx} className="flex items-center gap-2 text-xs text-gray-400">
+                              <span className="text-amber-500/40 font-mono w-4">{idx + 1}.</span>
+                              <span className="text-blue-300 font-mono">{typeof step === 'string' ? step : step.tool}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-center gap-3">

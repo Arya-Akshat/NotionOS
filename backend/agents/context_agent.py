@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from notion_mcp.context import WorkspaceContextBuilder
+from tools.workspace_reader import WorkspaceStyleAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -12,5 +13,11 @@ class ContextAgent:
         task_text = state.get("task_text", "")
         context = await WorkspaceContextBuilder.build(task_title, task_text)
         state["workspace_context"] = context
+        
+        style_data = await WorkspaceStyleAnalyzer.analyze_workspace_style(
+            state["task_text"]
+        )
+        state["workspace_style"] = style_data
+        
         logger.info({"event": "agent_complete", "component": "ContextAgent", "trace_id": state.get("workflow_id")})
         return state

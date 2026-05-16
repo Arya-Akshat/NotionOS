@@ -10,6 +10,119 @@ import re
 import logging
 from datetime import datetime
 from pydantic import BaseModel, Field
+
+def is_project_scaffolding_task(task_text: str) -> bool:
+    """
+    Returns True if the task appears to be a project creation request.
+    Trigger keywords: launch, build, create, start, set up, scaffold,
+    initialize, kickoff, begin, new project, new app, new product,
+    new website, new tool, new system, new service
+    """
+    if not task_text:
+        return False
+        
+    lower = task_text.lower()
+    triggers = [
+        "launch", "build", "create", "start", "set up", "scaffold",
+        "initialize", "kickoff", "begin", "new project", "new app", 
+        "new product", "new website", "new tool", "new system", "new service"
+    ]
+    
+    nouns = [
+        "app", "site", "product", "tool", "service", "platform", 
+        "bot", "system", "mvp", "startup", "business", "portfolio", "saas"
+    ]
+    
+    has_trigger = any(t in lower for t in triggers)
+    has_noun = any(n in lower for n in nouns)
+    
+    return has_trigger and has_noun
+
+def generate_scaffolding_plan(
+    task_text: str,
+    workspace_style: dict,
+    related_pages: list
+) -> dict:
+    """
+    Generates a structured scaffolding plan without calling LLM.
+    """
+    project_name = _derive_project_name(task_text, workspace_style)
+    
+    # Apply style to page names
+    from tools.workspace_reader import WorkspaceStyleAnalyzer
+    style = workspace_style.get("naming_style", {})
+    brief_name = WorkspaceStyleAnalyzer.apply_naming_style("Project Brief", style)
+    roadmap_name = WorkspaceStyleAnalyzer.apply_naming_style("Roadmap", style)
+    db_name = WorkspaceStyleAnalyzer.apply_naming_style("Task Tracker", style)
+    
+    preview = _generate_workspace_preview(project_name, [brief_name, roadmap_name], db_name, related_pages, style)
+    
+    return {
+        "type": "scaffolding",
+        "project_name": project_name,
+        "pages_to_create": [brief_name, roadmap_name],
+        "database_name": db_name,
+        "workspace_style": workspace_style,
+        "related_pages": related_pages,
+        "workspace_preview": preview,
+        "goal": f"Scaffold project workspace for {project_name}"
+    }
+
+def _derive_project_name(task_text: str, style_data: dict) -> str:
+    """
+    Extracts clean project name from task text.
+    "Launch my fitness app" -> "Fitness App"
+    """
+    # Simple regex based extraction
+    text = task_text
+    
+    # Remove trigger words from start
+    triggers = ["launch", "build", "create", "start", "set up", "scaffold", "initialize", "kickoff", "begin"]
+    for t in triggers:
+        text = re.sub(rf"^{t}\s+(my\s+|a\s+|an\s+)?", "", text, flags=re.IGNORECASE)
+    
+    # Clean up
+    text = text.strip().split("\n")[0] # Only first line
+    
+    # Apply naming style
+    from tools.workspace_reader import WorkspaceStyleAnalyzer
+    return WorkspaceStyleAnalyzer.apply_naming_style(text, style_data.get("naming_style", {}))
+
+def _generate_workspace_preview(project_name: str,
+                              pages: list,
+                              db_name: str,
+                              related: list,
+                              style: dict) -> str:
+    """
+    Generates the ASCII tree preview string.
+    """
+    preview = [
+        "🏗️ Proposed Workspace Structure",
+        f"📁 {project_name}/",
+    ]
+    for p in pages:
+        preview.append(f"├── 📄 {p}")
+    
+    preview.append(f"├── 🗃️ {db_name}")
+    preview.append("│    ├── Properties: Status, Priority, Due Date, Assignee")
+    preview.append("│    ├── 📋 Table View")
+    preview.append("│    ├── 📌 Kanban Board")
+    preview.append("│    └── 📅 Calendar View")
+    preview.append("└── 🔖 Execution Log (toggle on parent page)")
+    
+    if related:
+        preview.append("")
+        preview.append("Related pages detected:")
+        for r in related[:3]:
+             preview.append(f"→ [{r.get('title', 'Untitled')}] will be linked in Project Brief")
+             
+    preview.append("")
+    preview.append(f"Naming style: {style.get('case', 'title')} case" + (", with emojis" if style.get("uses_emojis") else ""))
+    
+    if not preview:
+        return "🏗️ Project Scaffolding Pending..."
+        
+    return "\n".join(preview)
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate

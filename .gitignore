@@ -1,36 +1,30 @@
-# Local variables
+# Databases
+*.db
+backend/*.db
+backend/notionos.db
+backend/notionos.db-journal
+
+# Logs
+logs/
+*.log
+backend/logs/
+
+# Secrets
 .env
 backend/.env
+*.json
+!package.json
+!tsconfig.json
+!next.config.json
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
+# Environment
+.venv/
 venv/
-backend/venv/
-.pytest_cache/
-.coverage
-htmlcov/
+env/
+__pycache__/
 
-# Google Tokens
-token_gmail.json
-token_calendar.json
-token.json
-
-# Node
-node_modules/
-frontend/node_modules/
-
-# Next.js
+# Frontend build
 .next/
-frontend/.next/
-out/
+dist/
 build/
-
-# IDEs
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
+node_modules/

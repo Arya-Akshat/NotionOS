@@ -209,100 +209,88 @@ async def create_notion_page(database_id: str, title: str, content: str = ""):
         return {"success": False, "data": {}, "error": f"NOTION_CREATE_ERROR:{str(e)}"}
 
 async def append_log_to_page(page_id: str, log_text: str):
-    children = [
-        {
-            "object": "block",
-            "type": "paragraph",
-            "paragraph": {
-                "rich_text": [{"type": "text", "text": {"content": f"🤖 Agent Log: {log_text}"}}]
-            }
-        }
-    ]
-
-    # Phase 2: Intercept with MCP
-    mcp_res = await _try_mcp("append_block_children (log)", mcp_client.append_blocks(page_id, children))
-    if mcp_res is not None:
-        return mcp_res
-
-    # Fallback HTTP
+    """Appends a log entry to the Notion page using direct HTTP."""
+    print(f"[Notion] Appending log to {page_id}")
     url = f"https://api.notion.com/v1/blocks/{page_id}/children"
     payload = {
-        "children": children
+        "children": [
+            {
+                "object": "block",
+                "type": "quote",
+                "quote": {
+                    "rich_text": [{"type": "text", "text": {"content": log_text}, "annotations": {"italic": True}}]
+                }
+            }
+        ]
     }
-    
     try:
         response = requests.patch(url, headers=_get_headers(), json=payload, timeout=DEFAULT_TIMEOUT)
         if response.status_code != 200:
-            return {"success": False, "data": {}, "error": f"NOTION_APPEND_ERROR:{response.status_code}"}
-        return {"success": True, "data": response.json(), "error": None}
-    except requests.exceptions.Timeout:
-        return {"success": False, "data": {}, "error": "NOTION_TIMEOUT"}
+            logger.error(f"Failed to append log: {response.status_code} {response.text}")
+            return {"success": False, "error": f"HTTP_{response.status_code}"}
+        return {"success": True}
     except Exception as e:
-        return {"success": False, "data": {}, "error": f"NOTION_APPEND_ERROR:{str(e)}"}
-
+        logger.error(f"Error appending log: {e}")
+        return {"success": False, "error": str(e)}
 
 async def append_result_to_page(page_id: str, lines: list[str]):
-    """Append a compact result section to a Notion page with readable block types."""
-    safe_lines = []
+    """Appends multiple result lines to the Notion page using direct HTTP."""
+    print(f"[Notion] Appending results to {page_id}")
+    if not lines:
+        return {"success": True}
+
+    children = []
     for line in lines:
-        if not isinstance(line, str):
-            continue
+        if not line or not isinstance(line, str): continue
+        
+        # Determine block type
+        block_type = "paragraph"
+        if line == "📋 Summary of Findings": block_type = "heading_3"
+        elif line.startswith("Search Result ") or line.startswith("Repository:") or line.startswith("Issue "):
+            block_type = "bulleted_list_item"
 
-        stripped = line.strip()
-        if not stripped:
-            continue
-
-        # Notion text content has practical size limits; keep paragraphs small.
-        chunk_size = 1800
-        for start in range(0, len(stripped), chunk_size):
-            safe_lines.append(stripped[start:start + chunk_size])
-
-    clean_lines = safe_lines
-    if not clean_lines:
-        return {"success": True, "data": {}, "error": None}
-
-    def _make_text_block(block_type: str, content: str):
-        return {
+        children.append({
             "object": "block",
             "type": block_type,
             block_type: {
-                "rich_text": [{"type": "text", "text": {"content": content}}]
+                "rich_text": [{"type": "text", "text": {"content": line[:2000]}}] # Notion limit
             }
-        }
+        })
 
-    children = []
-    for line in clean_lines:
-        if line == "Agent Result":
-            children.append(_make_text_block("heading_3", line))
-        elif line.startswith("Search Result ") or line.startswith("Repository:") or line.startswith("Issue "):
-            children.append(_make_text_block("bulleted_list_item", line))
-        else:
-            children.append(_make_text_block("paragraph", line))
+    # Notion limit is 100 children per request
+    for i in range(0, len(children), 100):
+        chunk = children[i:i+100]
+        url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+        try:
+            response = requests.patch(url, headers=_get_headers(), json={"children": chunk}, timeout=DEFAULT_TIMEOUT)
+            if response.status_code != 200:
+                logger.error(f"Failed to append results: {response.status_code} {response.text}")
+                return {"success": False, "error": f"HTTP_{response.status_code}"}
+        except Exception as e:
+            logger.error(f"Error appending results: {e}")
+            return {"success": False, "error": str(e)}
+    
+    return {"success": True}
 
-    # Phase 2: Intercept with MCP
-    mcp_res = await _try_mcp("append_block_children (result)", mcp_client.append_blocks(page_id, children))
-    if mcp_res is not None:
-        return mcp_res
-
-    url = f"https://api.notion.com/v1/blocks/{page_id}/children"
-    payload = {"children": children}
-
-    try:
-        response = requests.patch(url, headers=_get_headers(), json=payload, timeout=DEFAULT_TIMEOUT)
-        if response.status_code != 200:
-            return {"success": False, "data": {}, "error": f"NOTION_APPEND_ERROR:{response.status_code}"}
-        return {"success": True, "data": response.json(), "error": None}
-    except requests.exceptions.Timeout:
-        return {"success": False, "data": {}, "error": "NOTION_TIMEOUT"}
-    except Exception as e:
-        return {"success": False, "data": {}, "error": f"NOTION_APPEND_ERROR:{str(e)}"}
-
-async def write_proposed_actions(page_id: str, actions: list):
+async def write_proposed_actions(page_id: str, actions: list, preview: str = ""):
     children = [
         {"object": "block", "type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "--- Proposed Actions ---"}}]}}
     ]
-    for action in actions:
-        children.append({"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": str(action.get('tool', 'Tool'))}}]}})
+    
+    # If scaffolding, show the preview block
+    if actions and actions[0].get("type") == "scaffolding" and preview:
+        children.append({
+            "object": "block",
+            "type": "code",
+            "code": {
+                "rich_text": [{"type": "text", "text": {"content": preview}}],
+                "language": "plain text"
+            }
+        })
+    else:
+        for action in actions:
+            children.append({"object": "block", "type": "bulleted_list_item", "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": str(action.get('tool', 'Tool'))}}]}})
+            
     children.append({"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "Approval Status: Pending"}}]}})
 
 def get_approval_status(page_id: str) -> str:
@@ -318,49 +306,91 @@ def get_approval_status(page_id: str) -> str:
     except: pass
     return "Pending"
 
-def append_execution_update(page_id: str, step_name: str, status: str, detail: str = ""):
+async def write_initial_headers(page_id: str):
+    """Initializes the task page with clean, professional sections."""
+    children = [
+        {"object": "block", "type": "divider", "divider": {}},
+        {"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": "📍 Project Status & Results"}}]}},
+        {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "Below is the summary of the agent's work and the final output."}, "annotations": {"italic": True}}]}},
+        {"object": "block", "type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "🔄 Execution Timeline"}}]}},
+        {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "Tracking tool calls and progress in real-time..."}}]}}
+    ]
+    url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+    try:
+        requests.patch(url, headers=_get_headers(), json={"children": children}, timeout=DEFAULT_TIMEOUT)
+    except Exception as e:
+        logger.warning(f"Failed to write initial headers: {e}")
+
+async def append_execution_update(page_id: str, step_name: str, status: str, detail: str = ""):
+    """Appends a status update using bullet points for a cleaner look."""
     icon = "⏳" if status == "running" else "✅" if status == "complete" else "❌"
-    text = f"{icon} Step: {step_name} → {status}"
+    text = f"{step_name}: {status}"
     if detail:
         text += f" ({detail})"
     
-    children = [
-        {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": text}}]}}
-    ]
-
-    mcp_res = _try_mcp("append_block_children (exec update)", mcp_client.append_blocks(page_id, children))
-    if mcp_res is not None: return mcp_res
-    
     url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+    payload = {
+        "children": [
+            {
+                "object": "block",
+                "type": "bulleted_list_item",
+                "bulleted_list_item": {
+                    "rich_text": [
+                        {"type": "text", "text": {"content": f"{icon} "}},
+                        {"type": "text", "text": {"content": text}, "annotations": {"bold": (status == "running")}}
+                    ]
+                }
+            }
+        ]
+    }
     try:
-        requests.patch(url, headers=_get_headers(), json={"children": children}, timeout=DEFAULT_TIMEOUT)
+        requests.patch(url, headers=_get_headers(), json=payload, timeout=DEFAULT_TIMEOUT)
     except Exception as e:
-        logger.warning(f"Failed to append execution update to Notion: {e}")
+        logger.error(f"Error appending execution update: {e}")
 
-async def write_initial_headers(page_id: str):
-    children = [
-        {"object": "block", "type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "--- Execution Timeline ---"}}]}},
-        {"object": "block", "type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "--- Tool Outputs ---"}}]}},
-        {"object": "block", "type": "heading_3", "heading_3": {"rich_text": [{"type": "text", "text": {"content": "--- Agent Notes ---"}}]}}
-    ]
-    mcp_res = await _try_mcp("append_block_children (headers)", mcp_client.append_blocks(page_id, children))
-    if mcp_res is not None: return mcp_res
-    url = f"https://api.notion.com/v1/blocks/{page_id}/children"
-    try:
-        requests.patch(url, headers=_get_headers(), json={"children": children}, timeout=DEFAULT_TIMEOUT)
-    except Exception as e:
-        logger.warning(f"Failed to write initial headers to Notion: {e}")
 async def write_run_separator(page_id: str):
-    """Adds a visual separator and resets the approval status for a new run."""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    """Adds a visual separator for a new run with a clean timestamp."""
+    timestamp = datetime.now().strftime("%B %d, %Y at %I:%M %p")
     children = [
         {"object": "block", "type": "divider", "divider": {}},
-        {"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": f"🔄 NEW AGENT RUN: {timestamp}"}}]}},
-        {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "Approval Status: Pending"}}]}},
+        {"object": "block", "type": "heading_1", "heading_1": {"rich_text": [{"type": "text", "text": {"content": f"🚀 NotionOS Run"}}]}},
+        {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": f"Initiated on {timestamp}"}, "annotations": {"italic": True, "color": "gray"}}]}},
+        {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "Approval Status: Pending"}, "annotations": {"bold": True, "color": "orange"}}]}},
         {"object": "block", "type": "divider", "divider": {}},
     ]
-    await _try_mcp("append_block_children (separator)", mcp_client.append_blocks(page_id, children))
-    
+    url = f"https://api.notion.com/v1/blocks/{page_id}/children"
+    try:
+        requests.patch(url, headers=_get_headers(), json={"children": children}, timeout=DEFAULT_TIMEOUT)
+    except: pass
+
+async def write_scaffolding_result(page_id: str, project_name: str, project_url: str):
+    """Writes a prominent success message with a big link to the new project."""
+    children = [
+        {"object": "block", "type": "divider", "divider": {}},
+        {
+            "object": "block",
+            "type": "callout",
+            "callout": {
+                "rich_text": [
+                    {"type": "text", "text": {"content": "✨ Success! Your workspace is ready.\n\n"}, "annotations": {"bold": True}},
+                    {"type": "text", "text": {"content": f"The project '{project_name}' has been scaffolded with all requested components."}}
+                ],
+                "icon": {"type": "emoji", "emoji": "🏗️"},
+                "color": "green_background"
+            }
+        },
+        {
+            "object": "block",
+            "type": "paragraph",
+            "paragraph": {
+                "rich_text": [
+                    {"type": "text", "text": {"content": "👉 Open Project: "}, "annotations": {"bold": True}},
+                    {"type": "text", "text": {"content": project_name}, "link": {"url": project_url}, "annotations": {"bold": True, "color": "blue"}}
+                ]
+            }
+        },
+        {"object": "block", "type": "divider", "divider": {}}
+    ]
     url = f"https://api.notion.com/v1/blocks/{page_id}/children"
     try:
         requests.patch(url, headers=_get_headers(), json={"children": children}, timeout=DEFAULT_TIMEOUT)

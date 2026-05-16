@@ -1,10 +1,6 @@
-"""
-Agent Executor – dispatches tool calls based on the execution plan.
-Supports step objects {tool, args}. No fake-success placeholders.
-Includes retry logic and structured error handling.
-"""
-
 import time
+import asyncio
+import inspect
 from typing import Any
 from agent.planner import AgentState
 from tools import notion_tool, github_tool, browser_tool
@@ -58,7 +54,7 @@ def _normalize_step(step) -> dict:
     return {"tool": str(step), "args": {}}
 
 
-def _run_tool_with_retry(tool_name: str, args: dict, max_retries: int = MAX_RETRIES) -> dict:
+async def _run_tool_with_retry(tool_name: str, args: dict, max_retries: int = MAX_RETRIES) -> dict:
     """Execute a tool function with automatic retry on failure."""
     tool_func = TOOL_MAP.get(tool_name)
     if not tool_func:
@@ -70,9 +66,18 @@ def _run_tool_with_retry(tool_name: str, args: dict, max_retries: int = MAX_RETR
         }
 
     last_error = None
+    
     for attempt in range(1, max_retries + 1):
         try:
-            result = tool_func(**args)
+            # Execute sync or async tool
+            if inspect.iscoroutinefunction(tool_func) or asyncio.iscoroutine(tool_func):
+                 result = await tool_func(**args)
+            else:
+                 # Check if the lambda/func returns a coroutine
+                 result = tool_func(**args)
+                 if asyncio.iscoroutine(result):
+                     result = await result
+            
             if isinstance(result, dict) and "success" in result:
                 if result["success"]:
                     return result
@@ -84,7 +89,7 @@ def _run_tool_with_retry(tool_name: str, args: dict, max_retries: int = MAX_RETR
 
         if attempt < max_retries:
             print(f"[Executor] Retry {attempt}/{max_retries} for '{tool_name}': {last_error}")
-            time.sleep(RETRY_DELAY)
+            await asyncio.sleep(RETRY_DELAY)
 
     return {
         "success": False,
@@ -97,7 +102,7 @@ def _run_tool_with_retry(tool_name: str, args: dict, max_retries: int = MAX_RETR
 # Main execute function (called by the graph node)
 # ---------------------------------------------------------------------------
 
-def execute_tools(state: AgentState) -> AgentState:
+async def execute_tools(state: AgentState) -> AgentState:
     """Execute the current step in the plan. Respects FAILED status — never
     overwrite FAILED to COMPLETED."""
     # Guard: if already FAILED, don't execute further
@@ -112,31 +117,73 @@ def execute_tools(state: AgentState) -> AgentState:
         state["status"] = "COMPLETED"
         return state
 
-    step = _normalize_step(plan[current_step])
+    step_obj = plan[current_step]
+    
+    # -----------------------------------------------------------------------
+    # SCAFFOLDING INTERCEPTION
+    # -----------------------------------------------------------------------
+    if isinstance(step_obj, dict) and step_obj.get("type") == "scaffolding":
+        print("[Executor] 🏗️ Detected Scaffolding Plan — routing to ProjectScaffolder")
+        from tools.scaffolding_tool import ProjectScaffolder
+        scaffolder = ProjectScaffolder()
+        
+        data = step_obj.get("data", {})
+        project_name = data.get("project_name", "New Project")
+        workspace_style = data.get("workspace_style", {})
+        related_pages = data.get("related_pages", [])
+        
+        try:
+            res = await scaffolder.build_workspace(
+                project_name=project_name,
+                task_page_id=state["task_id"],
+                workspace_style=workspace_style,
+                related_pages=related_pages,
+                prior_runs=state.get("workspace_context", {}).get("prior_runs", []),
+                workflow_id=str(state.get("workflow_id", ""))
+            )
+            
+            outputs["scaffolding"] = res
+            if res.get("success"):
+                state["status"] = "COMPLETED"
+                state["current_step"] = current_step + 1
+            else:
+                state["status"] = "FAILED"
+                state["errors"] = state.get("errors", []) + res.get("errors", [])
+        except Exception as e:
+            state["status"] = "FAILED"
+            state["errors"] = state.get("errors", []) + [f"Scaffolding orchestration failed: {e}"]
+        
+        state["tool_outputs"] = outputs
+        return state
+
+    # Standard tool execution
+    step = _normalize_step(step_obj)
     tool_name = step["tool"]
     args = step["args"]
 
-    print(f"[Executor] Step {current_step + 1}/{len(plan)} → {tool_name}")
-
-    t0 = time.time()
-    result = _run_tool_with_retry(tool_name, args)
-    duration_ms = int((time.time() - t0) * 1000)
+    print(f"[Executor] Step {current_step+1}/{len(plan)}: {tool_name}")
+    
+    # Tool duration tracking
+    start_time = time.time()
+    result = await _run_tool_with_retry(tool_name, args)
+    duration_ms = int((time.time() - start_time) * 1000)
     result["duration_ms"] = duration_ms
 
-    # Store under tool_name (append step index if duplicate)
-    key = tool_name if tool_name not in outputs else f"{tool_name}_{current_step}"
-    outputs[key] = result
-
+    # Use tool_name as key, or tool_name_{index} if multiple
+    output_key = tool_name
+    if tool_name in outputs:
+        output_key = f"{tool_name}_{current_step}"
+    
+    outputs[output_key] = result
     state["tool_outputs"] = outputs
 
-    if not result["success"]:
-        state["errors"] = state.get("errors", []) + [f"{tool_name}: {result['error']}"]
-        print(f"[Executor] ⚠ Tool '{tool_name}' failed, continuing pipeline.")
-
-    state["current_step"] = current_step + 1
-    if state["current_step"] >= len(plan):
-        # Only mark COMPLETED if not already FAILED
-        if state.get("status") != "FAILED":
-            state["status"] = "COMPLETED"
+    if result.get("success"):
+        state["current_step"] = current_step + 1
+        if state["current_step"] >= len(plan):
+            if state.get("status") != "FAILED":
+                state["status"] = "COMPLETED"
+    else:
+        state["status"] = "FAILED"
+        state["errors"] = state.get("errors", []) + [result.get("error")]
 
     return state

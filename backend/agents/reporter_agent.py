@@ -12,6 +12,35 @@ class ReporterAgent:
         page_id = state.get("task_id", "")
         status = state.get("status", "COMPLETED")
 
+        # Handle Scaffolding Result
+        if state.get("is_scaffolding") and state.get("scaffolding_result"):
+            result = state["scaffolding_result"]
+            scaff_lines = [
+                "## ✅ Workspace Created",
+                "Your project workspace is ready.",
+                "",
+                "**Pages created:**"
+            ]
+            
+            # Since IDs aren't directly available in a friendly way here, we list by name
+            # In a real scenario, we'd map names to Notion URLs.
+            for pg in result.get("pages_created", []):
+                scaff_lines.append(f"- {pg}")
+            
+            if result.get("parent_page_id"):
+                 scaff_lines.append(f"\n**Parent page ID:** {result['parent_page_id']}")
+            
+            scaff_lines.append(f"\n{len(result.get('pages_created', []))} objects created.")
+            
+            if page_id:
+                from tools.notion_tool import append_result_to_page
+                await append_result_to_page(page_id, scaff_lines)
+                await update_notion_task_status(page_id, status)
+            
+            logger.info({"event": "agent_complete", "component": "ReporterAgent", "trace_id": state.get("workflow_id")})
+            return state
+
+        # Existing behavior for non-scaffolding
         plan = state.get("execution_plan", [])
         outputs = state.get("tool_outputs", {})
         total = len(plan)
