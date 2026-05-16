@@ -2,6 +2,10 @@
 
 NotionOS transforms Notion from a passive documentation tool into an executable operational layer. Built on the **Model Context Protocol (MCP)** and powered by **LangGraph**, it enables autonomous AI agents to plan, coordinate, and safely execute work across multiple tools while remaining grounded in your workspace context.
 
+### 📺 [Watch the Demo Video](demo2.mp4)
+
+---
+
 ---
 
 ## 🚀 Vision
