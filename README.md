@@ -22,23 +22,41 @@ graph TD
     C --> F[Human-in-the-Loop Approval]
     F --> G[ExecutorAgent]
     G <--> H[Tools & MCP Server]
+    G --> J[ProjectScaffolder]
+    J --> A
     C --> I[ReporterAgent]
     I --> A
 ```
 
 ### Key Engineering Pillars
 1. **Deep MCP Integration**: Uses an MCP-first hybrid architecture. The system natively spawns the official `@notionhq/notion-mcp-server` to interact with your workspace as a set of structured tools.
-2. **Human-in-the-Loop (HITL)**: Safety is built-in. Every execution plan must be approved via the Notion page or the live Dashboard before side-effects occur.
-3. **Multi-Agent Orchestration**: Specialized agents (Context, Planner, Executor, Reporter) isolate responsibilities to ensure robust execution and detailed reporting.
-4. **Real-Time Observability**: A dedicated Next.js dashboard streams execution logs, tool inputs/outputs, and state transitions via WebSockets.
+2. **Project Scaffolding Pipeline**: Automatically builds entire project workspaces including Project Briefs, Phase-based Roadmaps, and Task Tracker databases with pre-configured Kanban and Calendar views.
+3. **Human-in-the-Loop (HITL)**: Safety is built-in. Every execution plan must be approved via the Notion page or the live Dashboard before side-effects occur.
+4. **Real-Time Observability**: A dedicated Next.js dashboard streams execution logs, tool inputs/outputs, and state transitions via WebSockets with specialized visual highlighting for scaffolding tasks.
+
+---
+
+## ✨ Key Features
+
+### 🏢 Workspace Scaffolding
+- **Atomic Creation**: Build parent pages, sub-pages, and databases in a single coordinated workflow.
+    - **Project Brief**: Rich, domain-specific content generation.
+    - **Roadmap**: Automated phase planning and milestone tracking.
+    - **Task Tracker**: Pre-populated database with Status, Priority, and Assignee properties.
+- **Premium Notion UI**: Uses Notion callouts, bold highlights, and quote blocks for professional-grade reporting and workspace organization.
+
+### 📊 Real-Time Dashboard
+- **WebSocket Streaming**: Live log updates with sub-millisecond latency.
+- **Visual Gating**: Interactive approval system for proposed agent plans.
+- **Granular Progress**: Real-time construction logs for scaffolding tasks highlighted in **Violet** for high visibility.
 
 ---
 
 ## 🛠️ Tech Stack
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS 4.
-- **Backend**: FastAPI (Python), SQLAlchemy (SQLite/PostgreSQL).
+- **Backend**: FastAPI (Python), SQLAlchemy (SQLite).
 - **Agent Orchestration**: LangGraph, LangChain.
-- **AI Models**: Groq (Llama 3.3 70b) for speed, Google (Gemini 2.0 Flash) for complex fallback.
+- **AI Models**: Groq (Llama 3.3 70b) for speed, Google (Gemini 2.0 Flash) for complex planning.
 - **Protocol**: Model Context Protocol (MCP) via stdio transport.
 
 ---
@@ -64,6 +82,8 @@ GEMINI_API_KEY=your_key
 ```bash
 # Install backend dependencies
 cd backend
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 
 # Install frontend dependencies
@@ -75,7 +95,7 @@ npm install
 ```bash
 # Start the Backend (starts the MCP server & Watcher automatically)
 cd backend
-python -m uvicorn main:app --reload
+python main.py
 
 # Start the Frontend
 cd ../frontend
@@ -89,13 +109,14 @@ npm run dev
 - **Search**: Tavily-powered web research and extraction.
 - **Browser**: Playwright-based form filling and web interaction.
 - **Notion**: Status management, block appending, and workspace context retrieval.
+- **Scaffolder**: Direct HTTP-based database and page orchestration for high reliability.
 
 ---
 
 ## 🛡️ Safety & Reliability
-- **Synchronous Gating**: Prevents race conditions and duplicate task execution.
-- **State Persistence**: Every step is logged to a local database for full auditability.
-- **Hybrid Mode**: Automatic fallback to REST API if the MCP layer is unavailable.
+- **Duplicate Execution Guards**: Strict workflow locking using state-aware ID tracking.
+- **State Persistence**: Every step is logged to a local database for full auditability and resumption.
+- **Hybrid Mode**: Automatic fallback to direct REST API calls if the MCP abstraction layer encounters schema mismatches.
 
 ---
 
